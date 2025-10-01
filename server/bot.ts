@@ -153,6 +153,7 @@ async function handleReplyCommand(ctx: Context, command: Command): Promise<void>
   switch (command.actionType) {
     case "pin_message":
       await ctx.pinChatMessage(replyToMessageId);
+      await ctx.reply("✅ 消息已置顶");
       await storage.createLog({
         action: `执行指令：${command.name}`,
         details: `消息已置顶`,
@@ -164,6 +165,7 @@ async function handleReplyCommand(ctx: Context, command: Command): Promise<void>
 
     case "unpin_message":
       await ctx.unpinChatMessage(replyToMessageId);
+      await ctx.reply("✅ 消息已取消置顶");
       await storage.createLog({
         action: `执行指令：${command.name}`,
         details: `消息已取消置顶`,
@@ -179,6 +181,7 @@ async function handleReplyCommand(ctx: Context, command: Command): Promise<void>
         const customTitle = titleMatch ? titleMatch[1].trim() : "成员";
         
         await ctx.setChatAdministratorCustomTitle(targetUserId, customTitle);
+        await ctx.reply(`✅ 头衔已设置为 "${customTitle}"`);
         await storage.createLog({
           action: `执行指令：${command.name}`,
           details: `用户头衔已设置为 "${customTitle}"`,
@@ -192,6 +195,7 @@ async function handleReplyCommand(ctx: Context, command: Command): Promise<void>
     case "remove_title":
       if (targetUserId) {
         await ctx.setChatAdministratorCustomTitle(targetUserId, "");
+        await ctx.reply("✅ 用户头衔已删除");
         await storage.createLog({
           action: `执行指令：${command.name}`,
           details: `用户头衔已删除`,
