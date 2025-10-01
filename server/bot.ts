@@ -47,6 +47,24 @@ export async function startBot(token: string): Promise<void> {
       const messageText = ctx.message.text;
       const hasReply = !!ctx.message.reply_to_message;
 
+      if (messageText === "/id") {
+        const chatType = ctx.chat.type;
+        const chatTitle = "title" in ctx.chat ? ctx.chat.title : undefined;
+        
+        if (chatType === "group" || chatType === "supergroup") {
+          const member = await ctx.getChatMember(ctx.from.id);
+          if (member.status === "creator" || member.status === "administrator") {
+            await ctx.reply(
+              `📋 群组信息\n\n` +
+              `群组ID: ${chatId}\n` +
+              `群组名称: ${chatTitle || "未知"}\n\n` +
+              `💡 复制群组ID并在管理面板中添加到白名单即可启用机器人功能。`
+            );
+          }
+        }
+        return;
+      }
+
       const whitelistedGroup = await storage.getGroupByGroupId(chatId);
       if (!whitelistedGroup || !whitelistedGroup.isActive) {
         return;
