@@ -113,14 +113,18 @@ export async function startBot(token: string): Promise<void> {
   });
 
   // Webhook模式 - 高效、实时、低资源消耗
-  const webhookDomain = process.env.REPLIT_DEV_DOMAIN || process.env.REPL_SLUG;
+  // 使用环境变量配置域名（开发和生产环境统一使用）
+  const webhookDomain = process.env.WEBHOOK_DOMAIN || process.env.WEBHOOK_URL;
   
   if (!webhookDomain) {
-    throw new Error("REPLIT_DEV_DOMAIN not found. Webhook mode requires Replit environment.");
+    throw new Error("WEBHOOK_DOMAIN environment variable is required. Please set it to your domain (e.g., your-bot.replit.app or your-custom-domain.com)");
   }
   
   console.log("⏳ Setting up webhook...");
-  const webhookUrl = `https://${webhookDomain}/api/telegram-webhook`;
+  // 如果域名已包含协议，直接使用；否则添加 https://
+  const webhookUrl = webhookDomain.startsWith('http') 
+    ? `${webhookDomain}/api/telegram-webhook`
+    : `https://${webhookDomain}/api/telegram-webhook`;
   
   try {
     await bot.telegram.deleteWebhook({ drop_pending_updates: true });

@@ -123,18 +123,36 @@ Preferred communication style: Simple, everyday language.
 **Environment Variables**
 - `DATABASE_URL` - PostgreSQL connection string (required)
 - `SESSION_SECRET` - Session encryption key (required)
+- `WEBHOOK_DOMAIN` or `WEBHOOK_URL` - Webhook domain (required)
+  - 格式：`your-bot.replit.app` 或 `https://your-custom-domain.com`
+  - 开发和生产环境统一使用此变量
+  - 域名变更时只需修改环境变量，无需改代码
 - `NODE_ENV` - Environment mode (development/production)
-- `REPLIT_DEV_DOMAIN` - Replit domain for webhook (auto-provided)
 
 ### Bot Communication Method
 
 **Webhook Mode (Used)**
 - ✅ Real-time message delivery (instant, millisecond-level)
 - ✅ Low resource consumption (passive receiving)
-- ✅ Automatic domain configuration via `REPLIT_DEV_DOMAIN`
+- ✅ Flexible domain configuration via environment variables
 - ✅ Production-ready and efficient
 
-The bot uses Telegram's webhook API to receive messages instantly. Telegram pushes updates directly to the application endpoint at `https://{REPLIT_DEV_DOMAIN}/api/telegram-webhook`. This is more efficient than long polling and requires no CPU-intensive background processes.
+**Domain Configuration:**
+The bot uses Telegram's webhook API to receive messages instantly. Webhook URL is configured via the `WEBHOOK_DOMAIN` environment variable:
+
+**设置方法：**
+在 Replit Secrets 中添加环境变量：
+- 变量名：`WEBHOOK_DOMAIN` 或 `WEBHOOK_URL`
+- 变量值示例：
+  - `your-bot.replit.app`（开发环境）
+  - `your-custom-domain.com`（生产环境）
+  - `https://your-domain.com`（也支持带协议的完整URL）
+
+**优势：**
+- 统一配置：开发和生产环境使用同一变量
+- 灵活切换：域名变更时只需修改环境变量
+- 稳定可靠：不依赖代码自动推断，配置更明确
+- 高效实时：比 long polling 更高效，无 CPU 消耗
 
 ## Getting Started
 
