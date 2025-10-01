@@ -21,7 +21,8 @@ export default function Dashboard() {
     status: { isRunning: boolean };
   }>({
     queryKey: ["/api/bot/config"],
-    refetchInterval: 5000,
+    // 移除轮询：机器人状态变化很少，不需要每5秒查询
+    // 只在页面加载时获取一次即可
   });
 
   return (
