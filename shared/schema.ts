@@ -62,7 +62,8 @@ export type GroupWhitelist = typeof groupWhitelist.$inferSelect;
 export const commands = pgTable("commands", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   name: text("name").notNull(),
-  actionType: text("action_type").notNull(), // pin_message, set_title, mute, kick, delete_message
+  triggerType: text("trigger_type").notNull().default('reply'), // 'direct' or 'reply'
+  actionType: text("action_type").notNull(), // pin_message, unpin_message, unpin_all_messages, set_title, remove_title, mute, kick, delete_message, create_invite_link, set_group_name, set_group_description, delete_group_description
   description: text("description"),
   isEnabled: boolean("is_enabled").default(true).notNull(),
   usageCount: integer("usage_count").default(0).notNull(),

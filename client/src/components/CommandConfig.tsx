@@ -88,9 +88,18 @@ export default function CommandConfig() {
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <span className={`px-2 py-1 text-xs font-mono rounded ${getActionTypeColor(command.actionType)}`}>
                         {command.name}
+                      </span>
+                      <span
+                        className={`px-2 py-0.5 text-xs rounded-full ${
+                          command.triggerType === 'direct'
+                            ? "bg-blue-500/10 text-blue-500"
+                            : "bg-purple-500/10 text-purple-500"
+                        }`}
+                      >
+                        {command.triggerType === 'direct' ? "直接指令" : "回复指令"}
                       </span>
                       <span
                         className={`px-2 py-0.5 text-xs rounded-full ${

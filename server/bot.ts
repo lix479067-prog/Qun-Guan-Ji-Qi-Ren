@@ -1,7 +1,7 @@
 import { Telegraf, Context } from "telegraf";
 import { message } from "telegraf/filters";
 import { storage } from "./storage";
-import type { BotConfig } from "@shared/schema";
+import type { BotConfig, Command } from "@shared/schema";
 
 let bot: Telegraf | null = null;
 let botConfig: BotConfig | null = null;
@@ -14,10 +14,8 @@ export async function startBot(token: string): Promise<void> {
 
   bot = new Telegraf(token);
 
-  // Fetch bot info
   const botInfo = await bot.telegram.getMe();
   
-  // Update bot config in database
   const config = await storage.getBotConfig();
   if (config) {
     botConfig = await storage.updateBotConfig({
@@ -37,127 +35,49 @@ export async function startBot(token: string): Promise<void> {
     });
   }
 
-  // Log bot start
   await storage.createLog({
     action: "机器人启动",
     details: `Bot @${botInfo.username} 已成功启动`,
     status: "success",
   });
 
-  // Listen for messages with replies (commands)
   bot.on(message("text"), async (ctx) => {
     try {
-      // Check if message is a reply
-      if (!ctx.message.reply_to_message) {
-        return;
-      }
-
       const chatId = ctx.chat.id.toString();
       const messageText = ctx.message.text;
+      const hasReply = !!ctx.message.reply_to_message;
 
-      // Check if chat is whitelisted
       const whitelistedGroup = await storage.getGroupByGroupId(chatId);
       if (!whitelistedGroup || !whitelistedGroup.isActive) {
         return;
       }
 
-      // Check if sender is admin
       const member = await ctx.getChatMember(ctx.from.id);
       if (member.status !== "creator" && member.status !== "administrator") {
         return;
       }
 
-      // Find matching command
       const allCommands = await storage.getAllCommands();
-      const matchingCommand = allCommands.find(
-        (cmd) => cmd.isEnabled && messageText.includes(cmd.name)
-      );
-
-      if (!matchingCommand) {
-        return;
+      
+      let matchingCommand: Command | undefined;
+      
+      if (hasReply) {
+        matchingCommand = allCommands.find(
+          (cmd) => cmd.isEnabled && cmd.triggerType === 'reply' && messageText.includes(cmd.name)
+        );
+        
+        if (matchingCommand) {
+          await handleReplyCommand(ctx, matchingCommand);
+        }
+      } else {
+        matchingCommand = allCommands.find(
+          (cmd) => cmd.isEnabled && cmd.triggerType === 'direct' && messageText.includes(cmd.name)
+        );
+        
+        if (matchingCommand) {
+          await handleDirectCommand(ctx, matchingCommand);
+        }
       }
-
-      const replyToMessageId = ctx.message.reply_to_message.message_id;
-      const targetUserId = ctx.message.reply_to_message.from?.id;
-      const chatTitle = "title" in ctx.chat ? ctx.chat.title : undefined;
-
-      // Execute command based on action type
-      switch (matchingCommand.actionType) {
-        case "pin_message":
-          await ctx.pinChatMessage(replyToMessageId);
-          await storage.createLog({
-            action: `执行指令：${matchingCommand.name}`,
-            details: `消息已置顶`,
-            userName: `@${ctx.from.username || ctx.from.first_name}`,
-            groupTitle: chatTitle,
-            status: "success",
-          });
-          break;
-
-        case "set_title":
-          if (targetUserId) {
-            // Extract title from command text
-            const titleMatch = messageText.match(/更改头衔为(.+)/);
-            const customTitle = titleMatch ? titleMatch[1].trim() : "成员";
-            
-            await ctx.setChatAdministratorCustomTitle(targetUserId, customTitle);
-            await storage.createLog({
-              action: `执行指令：${matchingCommand.name}`,
-              details: `用户头衔已设置为 "${customTitle}"`,
-              userName: `@${ctx.from.username || ctx.from.first_name}`,
-              groupTitle: chatTitle,
-              status: "success",
-            });
-          }
-          break;
-
-        case "mute":
-          if (targetUserId) {
-            const until = Math.floor(Date.now() / 1000) + 3600; // 1 hour
-            await ctx.restrictChatMember(targetUserId, {
-              permissions: {
-                can_send_messages: false,
-              },
-              until_date: until,
-            });
-            await storage.createLog({
-              action: `执行指令：${matchingCommand.name}`,
-              details: `用户已被禁言1小时`,
-              userName: `@${ctx.from.username || ctx.from.first_name}`,
-              groupTitle: chatTitle,
-              status: "success",
-            });
-          }
-          break;
-
-        case "kick":
-          if (targetUserId) {
-            await ctx.banChatMember(targetUserId);
-            await ctx.unbanChatMember(targetUserId); // Unban to allow rejoin
-            await storage.createLog({
-              action: `执行指令：${matchingCommand.name}`,
-              details: `用户已被踢出群组`,
-              userName: `@${ctx.from.username || ctx.from.first_name}`,
-              groupTitle: chatTitle,
-              status: "success",
-            });
-          }
-          break;
-
-        case "delete_message":
-          await ctx.deleteMessage(replyToMessageId);
-          await storage.createLog({
-            action: `执行指令：${matchingCommand.name}`,
-            details: `消息已删除`,
-            userName: `@${ctx.from.username || ctx.from.first_name}`,
-            groupTitle: chatTitle,
-            status: "success",
-          });
-          break;
-      }
-
-      // Increment command usage count
-      await storage.incrementCommandUsage(matchingCommand.id);
     } catch (error: any) {
       console.error("Bot error:", error);
       await storage.createLog({
@@ -174,6 +94,205 @@ export async function startBot(token: string): Promise<void> {
   console.log(`Bot @${botInfo.username} started successfully`);
 }
 
+async function handleReplyCommand(ctx: Context, command: Command): Promise<void> {
+  if (!ctx.message || !("text" in ctx.message) || !ctx.message.reply_to_message || !ctx.from || !ctx.chat) {
+    return;
+  }
+
+  const messageText = ctx.message.text;
+  const replyToMessageId = ctx.message.reply_to_message.message_id;
+  const targetUserId = ctx.message.reply_to_message.from?.id;
+  const chatTitle = "title" in ctx.chat ? ctx.chat.title : undefined;
+
+  switch (command.actionType) {
+    case "pin_message":
+      await ctx.pinChatMessage(replyToMessageId);
+      await storage.createLog({
+        action: `执行指令：${command.name}`,
+        details: `消息已置顶`,
+        userName: `@${ctx.from.username || ctx.from.first_name}`,
+        groupTitle: chatTitle,
+        status: "success",
+      });
+      break;
+
+    case "unpin_message":
+      await ctx.unpinChatMessage(replyToMessageId);
+      await storage.createLog({
+        action: `执行指令：${command.name}`,
+        details: `消息已取消置顶`,
+        userName: `@${ctx.from.username || ctx.from.first_name}`,
+        groupTitle: chatTitle,
+        status: "success",
+      });
+      break;
+
+    case "set_title":
+      if (targetUserId) {
+        const titleMatch = messageText.match(/设置头衔\s*(.+)/);
+        const customTitle = titleMatch ? titleMatch[1].trim() : "成员";
+        
+        await ctx.setChatAdministratorCustomTitle(targetUserId, customTitle);
+        await storage.createLog({
+          action: `执行指令：${command.name}`,
+          details: `用户头衔已设置为 "${customTitle}"`,
+          userName: `@${ctx.from.username || ctx.from.first_name}`,
+          groupTitle: chatTitle,
+          status: "success",
+        });
+      }
+      break;
+
+    case "remove_title":
+      if (targetUserId) {
+        await ctx.setChatAdministratorCustomTitle(targetUserId, "");
+        await storage.createLog({
+          action: `执行指令：${command.name}`,
+          details: `用户头衔已删除`,
+          userName: `@${ctx.from.username || ctx.from.first_name}`,
+          groupTitle: chatTitle,
+          status: "success",
+        });
+      }
+      break;
+
+    case "mute":
+      if (targetUserId) {
+        const until = Math.floor(Date.now() / 1000) + 3600;
+        await ctx.restrictChatMember(targetUserId, {
+          permissions: {
+            can_send_messages: false,
+          },
+          until_date: until,
+        });
+        await storage.createLog({
+          action: `执行指令：${command.name}`,
+          details: `用户已被禁言1小时`,
+          userName: `@${ctx.from.username || ctx.from.first_name}`,
+          groupTitle: chatTitle,
+          status: "success",
+        });
+      }
+      break;
+
+    case "kick":
+      if (targetUserId) {
+        await ctx.banChatMember(targetUserId);
+        await ctx.unbanChatMember(targetUserId);
+        await storage.createLog({
+          action: `执行指令：${command.name}`,
+          details: `用户已被踢出群组`,
+          userName: `@${ctx.from.username || ctx.from.first_name}`,
+          groupTitle: chatTitle,
+          status: "success",
+        });
+      }
+      break;
+
+    case "delete_message":
+      await ctx.deleteMessage(replyToMessageId);
+      await storage.createLog({
+        action: `执行指令：${command.name}`,
+        details: `消息已删除`,
+        userName: `@${ctx.from.username || ctx.from.first_name}`,
+        groupTitle: chatTitle,
+        status: "success",
+      });
+      break;
+  }
+
+  await storage.incrementCommandUsage(command.id);
+}
+
+async function handleDirectCommand(ctx: Context, command: Command): Promise<void> {
+  if (!ctx.message || !("text" in ctx.message) || !ctx.from || !ctx.chat) {
+    return;
+  }
+
+  const messageText = ctx.message.text;
+  const chatTitle = "title" in ctx.chat ? ctx.chat.title : undefined;
+
+  switch (command.actionType) {
+    case "unpin_all_messages":
+      await ctx.unpinAllChatMessages();
+      await storage.createLog({
+        action: `执行指令：${command.name}`,
+        details: `所有置顶消息已取消`,
+        userName: `@${ctx.from.username || ctx.from.first_name}`,
+        groupTitle: chatTitle,
+        status: "success",
+      });
+      break;
+
+    case "create_invite_link":
+      const linkMatch = messageText.match(/邀请\s*(\d+)\s*(\d+)/);
+      const memberLimit = linkMatch ? parseInt(linkMatch[1]) : 100;
+      const expireMinutes = linkMatch ? parseInt(linkMatch[2]) : 60;
+      const expireDate = Math.floor(Date.now() / 1000) + (expireMinutes * 60);
+      
+      const inviteLink = await ctx.createChatInviteLink({
+        member_limit: memberLimit,
+        expire_date: expireDate,
+      });
+      
+      await ctx.reply(`邀请链接已创建：\n${inviteLink.invite_link}\n人数限制：${memberLimit}\n有效期：${expireMinutes}分钟`);
+      
+      await storage.createLog({
+        action: `执行指令：${command.name}`,
+        details: `创建邀请链接，限制${memberLimit}人，有效期${expireMinutes}分钟`,
+        userName: `@${ctx.from.username || ctx.from.first_name}`,
+        groupTitle: chatTitle,
+        status: "success",
+      });
+      break;
+
+    case "set_group_name":
+      const nameMatch = messageText.match(/设置群名\s+(.+)/);
+      const newName = nameMatch ? nameMatch[1].trim() : "";
+      
+      if (newName) {
+        await ctx.setChatTitle(newName);
+        await storage.createLog({
+          action: `执行指令：${command.name}`,
+          details: `群组名称已修改为 "${newName}"`,
+          userName: `@${ctx.from.username || ctx.from.first_name}`,
+          groupTitle: chatTitle,
+          status: "success",
+        });
+      }
+      break;
+
+    case "set_group_description":
+      const descMatch = messageText.match(/设置简介\s+(.+)/);
+      const newDesc = descMatch ? descMatch[1].trim() : "";
+      
+      if (newDesc) {
+        await ctx.setChatDescription(newDesc);
+        await storage.createLog({
+          action: `执行指令：${command.name}`,
+          details: `群组简介已修改`,
+          userName: `@${ctx.from.username || ctx.from.first_name}`,
+          groupTitle: chatTitle,
+          status: "success",
+        });
+      }
+      break;
+
+    case "delete_group_description":
+      await ctx.setChatDescription("");
+      await storage.createLog({
+        action: `执行指令：${command.name}`,
+        details: `群组简介已删除`,
+        userName: `@${ctx.from.username || ctx.from.first_name}`,
+        groupTitle: chatTitle,
+        status: "success",
+      });
+      break;
+  }
+
+  await storage.incrementCommandUsage(command.id);
+}
+
 export async function stopBot(): Promise<void> {
   if (bot) {
     await bot.stop();
@@ -188,7 +307,6 @@ export function getBotStatus(): { isRunning: boolean; config: BotConfig | null }
   };
 }
 
-// Initialize bot on server start if token exists
 (async () => {
   const config = await storage.getBotConfig();
   if (config && config.token && config.isActive) {
