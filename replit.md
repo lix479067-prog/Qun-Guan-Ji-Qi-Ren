@@ -216,7 +216,8 @@ Supported operations:
 - `set_title` - Set custom title for replied user (format: "设置头衔 [名称]")
 - `remove_title` - Remove custom title from replied user
 - `mute` - Mute the replied user (1 hour)
-- `kick` - Kick the replied user from group
+- `kick` - Kick the replied user from group (can rejoin)
+- `ban` - Permanently ban the replied user from group (cannot rejoin)
 - `delete_message` - Delete the replied message
 
 **Example: Pin Message**
@@ -240,7 +241,13 @@ Supported operations:
 
 ## Recent Changes
 
-### 2025-10-01 (Latest Update)
+### 2025-10-01 (Latest Update - Part 2)
+- **Added ban user operation:**
+  - New "ban" action type for permanently banning users (cannot rejoin)
+  - Differentiated from "kick" which allows users to rejoin
+  - Available as reply command (admin replies to user then sends ban command)
+
+### 2025-10-01 (Earlier Update)
 - **Added two command trigger types:**
   - Direct commands: Admin sends command without replying (e.g., "邀请 100 60", "设置群名 新名称")
   - Reply commands: Admin replies to message/user then sends command (e.g., reply + "置顶", reply + "设置头衔 VIP")
@@ -250,7 +257,9 @@ Supported operations:
 - Updated database schema with `trigger_type` field (default: 'reply')
 - Refactored bot.ts with separate handlers for direct and reply commands
 - Enhanced UI to show trigger type badges (blue for direct, purple for reply)
-- All new features tested and verified working end-to-end
+- Optimized API requests: removed frontend polling to reduce resource usage
+- Configured webhook URL via environment variables for deployment flexibility
+- Fixed port configuration for Autoscale deployment compatibility
 
 ### 2025-10-01 (Earlier)
 - Fixed TypeScript LSP errors across the codebase

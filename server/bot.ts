@@ -235,6 +235,19 @@ async function handleReplyCommand(ctx: Context, command: Command): Promise<void>
       }
       break;
 
+    case "ban":
+      if (targetUserId) {
+        await ctx.banChatMember(targetUserId);
+        await storage.createLog({
+          action: `执行指令：${command.name}`,
+          details: `用户已被永久封禁`,
+          userName: `@${ctx.from.username || ctx.from.first_name}`,
+          groupTitle: chatTitle,
+          status: "success",
+        });
+      }
+      break;
+
     case "delete_message":
       await ctx.deleteMessage(replyToMessageId);
       await storage.createLog({

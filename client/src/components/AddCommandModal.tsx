@@ -170,6 +170,7 @@ export default function AddCommandModal({ isOpen, onClose, editingCommand }: Add
                 <SelectItem value="remove_title">删除用户头衔（需回复）</SelectItem>
                 <SelectItem value="mute">禁言用户（需回复）</SelectItem>
                 <SelectItem value="kick">踢出用户（需回复）</SelectItem>
+                <SelectItem value="ban">封禁用户（需回复）</SelectItem>
                 <SelectItem value="delete_message">删除消息（需回复）</SelectItem>
                 <SelectItem value="create_invite_link">创建邀请链接（直接）</SelectItem>
                 <SelectItem value="set_group_name">设置群组名称（直接）</SelectItem>
