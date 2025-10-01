@@ -112,36 +112,27 @@ export async function startBot(token: string): Promise<void> {
     console.error(`⚠️  Bot error for ${ctx.updateType}:`, err);
   });
 
+  // Webhook模式 - 高效、实时、低资源消耗
   const webhookDomain = process.env.REPLIT_DEV_DOMAIN || process.env.REPL_SLUG;
   
-  if (webhookDomain) {
-    console.log("⏳ Setting up webhook (Replit mode)...");
-    const webhookUrl = `https://${webhookDomain}/api/telegram-webhook`;
-    
-    try {
-      await bot.telegram.deleteWebhook({ drop_pending_updates: true });
-      await bot.telegram.setWebhook(webhookUrl);
-      console.log(`✅ Webhook set to: ${webhookUrl}`);
-      console.log(`📝 Bot ID: ${botInfo.id}`);
-      console.log(`🎯 Bot username: @${botInfo.username}`);
-      console.log(`✉️ Bot will receive messages via webhook (instant, more efficient)`);
-    } catch (webhookError: any) {
-      console.error("❌ Webhook setup failed:", webhookError.message);
-      throw webhookError;
-    }
-  } else {
-    console.log("⏳ Using long polling mode...");
-    
-    try {
-      await bot.launch();
-      console.log(`✅ Bot @${botInfo.username} started successfully`);
-      console.log(`📝 Bot ID: ${botInfo.id}`);
-      console.log(`🎯 Bot username: @${botInfo.username}`);
-      console.log(`✉️ Bot can now receive messages via long polling`);
-    } catch (launchError: any) {
-      console.error("❌ bot.launch() failed:", launchError.message);
-      throw launchError;
-    }
+  if (!webhookDomain) {
+    throw new Error("REPLIT_DEV_DOMAIN not found. Webhook mode requires Replit environment.");
+  }
+  
+  console.log("⏳ Setting up webhook...");
+  const webhookUrl = `https://${webhookDomain}/api/telegram-webhook`;
+  
+  try {
+    await bot.telegram.deleteWebhook({ drop_pending_updates: true });
+    await bot.telegram.setWebhook(webhookUrl);
+    console.log(`✅ Webhook configured successfully`);
+    console.log(`📝 Bot ID: ${botInfo.id}`);
+    console.log(`🎯 Bot username: @${botInfo.username}`);
+    console.log(`🔗 Webhook URL: ${webhookUrl}`);
+    console.log(`✉️ Messages will be received instantly via webhook`);
+  } catch (webhookError: any) {
+    console.error("❌ Webhook setup failed:", webhookError.message);
+    throw webhookError;
   }
 }
 
@@ -346,8 +337,15 @@ async function handleDirectCommand(ctx: Context, command: Command): Promise<void
 
 export async function stopBot(): Promise<void> {
   if (bot) {
-    await bot.stop();
+    try {
+      // Webhook模式：删除webhook配置，停止接收消息
+      await bot.telegram.deleteWebhook({ drop_pending_updates: true });
+      console.log("🛑 Webhook deleted, bot stopped");
+    } catch (error: any) {
+      console.error("⚠️  Failed to delete webhook:", error.message);
+    }
     bot = null;
+    botConfig = null;
   }
 }
 

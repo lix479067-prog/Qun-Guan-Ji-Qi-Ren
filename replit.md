@@ -124,6 +124,17 @@ Preferred communication style: Simple, everyday language.
 - `DATABASE_URL` - PostgreSQL connection string (required)
 - `SESSION_SECRET` - Session encryption key (required)
 - `NODE_ENV` - Environment mode (development/production)
+- `REPLIT_DEV_DOMAIN` - Replit domain for webhook (auto-provided)
+
+### Bot Communication Method
+
+**Webhook Mode (Used)**
+- ✅ Real-time message delivery (instant, millisecond-level)
+- ✅ Low resource consumption (passive receiving)
+- ✅ Automatic domain configuration via `REPLIT_DEV_DOMAIN`
+- ✅ Production-ready and efficient
+
+The bot uses Telegram's webhook API to receive messages instantly. Telegram pushes updates directly to the application endpoint at `https://{REPLIT_DEV_DOMAIN}/api/telegram-webhook`. This is more efficient than long polling and requires no CPU-intensive background processes.
 
 ## Getting Started
 
