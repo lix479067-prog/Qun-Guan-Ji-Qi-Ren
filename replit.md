@@ -156,25 +156,48 @@ These credentials are automatically created on first server start if no admin ex
 
 4. **Configure Commands**
    - Create custom commands in the dashboard
-   - Supported action types:
-     - `pin_message` - Pin messages
-     - `set_title` - Change user titles
-     - `mute` - Mute users
-     - `kick` - Kick users
-     - `delete_message` - Delete messages
+   - Choose trigger type: Direct (no reply needed) or Reply (reply to message/user first)
+   - Select from various action types based on trigger method
 
-### How Commands Work
+### Command Trigger Types
 
-The bot listens for reply messages from group administrators. When an admin replies to a message with a configured command:
+The bot supports two types of command triggers:
+
+**1. Direct Commands** (管理员直接发送)
+Admin sends command directly in the group without replying to any message.
+
+Supported operations:
+- `unpin_all_messages` - Unpin all pinned messages
+- `create_invite_link` - Create temporary invite link (format: "邀请 [人数] [分钟]")
+- `set_group_name` - Change group name (format: "设置群名 [新名称]")
+- `set_group_description` - Set group description (format: "设置简介 [内容]")
+- `delete_group_description` - Delete group description
+
+**Example: Create Invite Link**
+1. Admin sends: "邀请 100 60" (100 members, 60 minutes expiry)
+2. Bot creates invite link and replies with the link
+3. Action is logged
+
+**2. Reply Commands** (管理员回复消息后发送)
+Admin must reply to a message or user first, then send the command.
+
+Supported operations:
+- `pin_message` - Pin the replied message
+- `unpin_message` - Unpin the replied message
+- `set_title` - Set custom title for replied user (format: "设置头衔 [名称]")
+- `remove_title` - Remove custom title from replied user
+- `mute` - Mute the replied user (1 hour)
+- `kick` - Kick the replied user from group
+- `delete_message` - Delete the replied message
 
 **Example: Pin Message**
-1. Admin replies to a message with text containing "置顶消息"
+1. Admin replies to a message with text containing "置顶"
 2. Bot checks if admin has proper permissions
 3. Bot pins the replied-to message
-4. Action is logged in activity logs
+4. Action is logged
 
 **Example: Set Title**
-1. Admin replies to a user's message with "更改头衔为VIP会员"
+1. Admin replies to a user's message with "设置头衔 VIP会员"
 2. Bot extracts "VIP会员" as the custom title
 3. Bot updates the user's admin title
 4. Action is logged
@@ -188,7 +211,19 @@ The bot listens for reply messages from group administrators. When an admin repl
 
 ## Recent Changes
 
-### 2025-10-01
+### 2025-10-01 (Latest Update)
+- **Added two command trigger types:**
+  - Direct commands: Admin sends command without replying (e.g., "邀请 100 60", "设置群名 新名称")
+  - Reply commands: Admin replies to message/user then sends command (e.g., reply + "置顶", reply + "设置头衔 VIP")
+- **Implemented 7 new command operations:**
+  - unpin_message, unpin_all_messages, remove_title (reply commands)
+  - create_invite_link, set_group_name, set_group_description, delete_group_description (direct commands)
+- Updated database schema with `trigger_type` field (default: 'reply')
+- Refactored bot.ts with separate handlers for direct and reply commands
+- Enhanced UI to show trigger type badges (blue for direct, purple for reply)
+- All new features tested and verified working end-to-end
+
+### 2025-10-01 (Earlier)
 - Fixed TypeScript LSP errors across the codebase
 - Added session type declarations for express-session
 - Improved Telegram chat type handling in bot.ts
@@ -206,6 +241,8 @@ All core features have been tested and verified:
 - ✅ Admin login/logout functionality
 - ✅ Group whitelist (add/remove groups)
 - ✅ Command configuration (create/edit/delete commands)
+- ✅ Direct command triggers (verified triggerType='direct' persisted in DB)
+- ✅ Reply command triggers (verified triggerType='reply' persisted in DB)
 - ✅ Activity logs display
 - ✅ Statistics dashboard
 
