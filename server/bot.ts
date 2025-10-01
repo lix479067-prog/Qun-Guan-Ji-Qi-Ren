@@ -109,7 +109,9 @@ export async function startBot(token: string): Promise<void> {
   });
 
   await bot.launch();
-  console.log(`Bot @${botInfo.username} started successfully`);
+  console.log(`✅ Bot @${botInfo.username} started successfully`);
+  console.log(`Bot ID: ${botInfo.id}`);
+  console.log(`Bot can receive messages now`);
 }
 
 async function handleReplyCommand(ctx: Context, command: Command): Promise<void> {
