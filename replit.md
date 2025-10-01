@@ -124,3 +124,97 @@ Preferred communication style: Simple, everyday language.
 - `DATABASE_URL` - PostgreSQL connection string (required)
 - `SESSION_SECRET` - Session encryption key (required)
 - `NODE_ENV` - Environment mode (development/production)
+
+## Getting Started
+
+### Default Admin Credentials
+- **Username**: `admin`
+- **Password**: `admin123`
+
+These credentials are automatically created on first server start if no admin exists.
+
+### Setting Up a Telegram Bot
+
+1. **Create a Telegram Bot**
+   - Open Telegram and search for `@BotFather`
+   - Send `/newbot` command
+   - Follow the prompts to create your bot
+   - Copy the bot token (format: `123456789:ABCdefGHIjklMNOpqrsTUVwxyz`)
+
+2. **Configure Bot in Dashboard**
+   - Log in to the web dashboard
+   - Navigate to "机器人配置" (Bot Configuration) section
+   - Paste your bot token
+   - Click "更新Token" (Update Token)
+   - Bot will automatically restart with new configuration
+
+3. **Add Bot to Groups**
+   - Add your bot to a Telegram group
+   - Promote the bot to admin with necessary permissions
+   - Get the group ID (use `/id` command or Telegram API)
+   - Add the group to whitelist in the dashboard
+
+4. **Configure Commands**
+   - Create custom commands in the dashboard
+   - Supported action types:
+     - `pin_message` - Pin messages
+     - `set_title` - Change user titles
+     - `mute` - Mute users
+     - `kick` - Kick users
+     - `delete_message` - Delete messages
+
+### How Commands Work
+
+The bot listens for reply messages from group administrators. When an admin replies to a message with a configured command:
+
+**Example: Pin Message**
+1. Admin replies to a message with text containing "置顶消息"
+2. Bot checks if admin has proper permissions
+3. Bot pins the replied-to message
+4. Action is logged in activity logs
+
+**Example: Set Title**
+1. Admin replies to a user's message with "更改头衔为VIP会员"
+2. Bot extracts "VIP会员" as the custom title
+3. Bot updates the user's admin title
+4. Action is logged
+
+### Group Whitelist Security
+
+- Only whitelisted groups can use the bot
+- Bot ignores commands from non-whitelisted groups
+- Only group administrators can trigger commands
+- Regular group members cannot execute bot commands
+
+## Recent Changes
+
+### 2025-10-01
+- Fixed TypeScript LSP errors across the codebase
+- Added session type declarations for express-session
+- Improved Telegram chat type handling in bot.ts
+- Added proper type annotations for React Query responses
+- Updated storage interface to support bot configuration updates
+- All MVP features tested and verified working:
+  - Admin login and authentication
+  - Group whitelist management
+  - Command configuration (create, edit, delete)
+  - Activity logging and statistics
+
+## Testing Status
+
+All core features have been tested and verified:
+- ✅ Admin login/logout functionality
+- ✅ Group whitelist (add/remove groups)
+- ✅ Command configuration (create/edit/delete commands)
+- ✅ Activity logs display
+- ✅ Statistics dashboard
+
+## Next Steps
+
+Potential future enhancements:
+- Add more command types (ban, unban, warn)
+- Per-group command configuration
+- Multi-admin support with role-based permissions
+- Enhanced activity log filtering and search
+- Bot uptime monitoring and alerts
+- Webhook support for better performance
