@@ -108,10 +108,41 @@ export async function startBot(token: string): Promise<void> {
     }
   });
 
-  await bot.launch();
-  console.log(`✅ Bot @${botInfo.username} started successfully`);
-  console.log(`Bot ID: ${botInfo.id}`);
-  console.log(`Bot can receive messages now`);
+  bot.catch((err: any, ctx: Context) => {
+    console.error(`⚠️  Bot error for ${ctx.updateType}:`, err);
+  });
+
+  const webhookDomain = process.env.REPLIT_DEV_DOMAIN || process.env.REPL_SLUG;
+  
+  if (webhookDomain) {
+    console.log("⏳ Setting up webhook (Replit mode)...");
+    const webhookUrl = `https://${webhookDomain}/api/telegram-webhook`;
+    
+    try {
+      await bot.telegram.deleteWebhook({ drop_pending_updates: true });
+      await bot.telegram.setWebhook(webhookUrl);
+      console.log(`✅ Webhook set to: ${webhookUrl}`);
+      console.log(`📝 Bot ID: ${botInfo.id}`);
+      console.log(`🎯 Bot username: @${botInfo.username}`);
+      console.log(`✉️ Bot will receive messages via webhook (instant, more efficient)`);
+    } catch (webhookError: any) {
+      console.error("❌ Webhook setup failed:", webhookError.message);
+      throw webhookError;
+    }
+  } else {
+    console.log("⏳ Using long polling mode...");
+    
+    try {
+      await bot.launch();
+      console.log(`✅ Bot @${botInfo.username} started successfully`);
+      console.log(`📝 Bot ID: ${botInfo.id}`);
+      console.log(`🎯 Bot username: @${botInfo.username}`);
+      console.log(`✉️ Bot can now receive messages via long polling`);
+    } catch (launchError: any) {
+      console.error("❌ bot.launch() failed:", launchError.message);
+      throw launchError;
+    }
+  }
 }
 
 async function handleReplyCommand(ctx: Context, command: Command): Promise<void> {
@@ -327,13 +358,23 @@ export function getBotStatus(): { isRunning: boolean; config: BotConfig | null }
   };
 }
 
+export function getBotInstance(): Telegraf | null {
+  return bot;
+}
+
 (async () => {
+  console.log("🤖 Checking for bot configuration...");
   const config = await storage.getBotConfig();
+  console.log("Config found:", config ? "Yes" : "No");
+  
   if (config && config.token && config.isActive) {
+    console.log("🚀 Starting bot with token:", config.token.substring(0, 10) + "...");
     try {
       await startBot(config.token);
     } catch (error) {
-      console.error("Failed to start bot on initialization:", error);
+      console.error("❌ Failed to start bot on initialization:", error);
     }
+  } else {
+    console.log("⚠️  Bot not started: No active config found");
   }
 })();

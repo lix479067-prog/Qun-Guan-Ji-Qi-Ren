@@ -4,7 +4,7 @@ import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { storage } from "./storage";
 import { hashPassword, verifyPassword, isAuthenticated } from "./auth";
-import { startBot, stopBot, getBotStatus } from "./bot";
+import { startBot, stopBot, getBotStatus, getBotInstance } from "./bot";
 import { insertGroupWhitelistSchema, insertCommandSchema } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -113,6 +113,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("Bot config error:", error);
       res.status(500).json({ message: error.message || "更新机器人配置失败" });
+    }
+  });
+
+  // Telegram webhook endpoint
+  app.post("/api/telegram-webhook", async (req, res) => {
+    try {
+      const bot = getBotInstance();
+      if (!bot) {
+        return res.status(503).json({ message: "Bot not running" });
+      }
+      
+      await bot.handleUpdate(req.body);
+      res.sendStatus(200);
+    } catch (error: any) {
+      console.error("Webhook error:", error);
+      res.sendStatus(500);
     }
   });
 
