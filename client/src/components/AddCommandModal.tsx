@@ -31,6 +31,27 @@ interface AddCommandModalProps {
   editingCommand?: Command | null;
 }
 
+// 定义操作类型和触发方式的映射关系
+const actionTypesByTrigger = {
+  reply: [
+    { value: "pin_message", label: "置顶消息" },
+    { value: "unpin_message", label: "取消置顶消息" },
+    { value: "set_title", label: "设置用户头衔" },
+    { value: "remove_title", label: "删除用户头衔" },
+    { value: "mute", label: "禁言用户" },
+    { value: "kick", label: "踢出用户" },
+    { value: "ban", label: "封禁用户" },
+    { value: "delete_message", label: "删除消息" },
+  ],
+  direct: [
+    { value: "unpin_all_messages", label: "取消所有置顶" },
+    { value: "create_invite_link", label: "创建邀请链接" },
+    { value: "set_group_name", label: "设置群组名称" },
+    { value: "set_group_description", label: "设置群组简介" },
+    { value: "delete_group_description", label: "删除群组简介" },
+  ],
+} as const;
+
 export default function AddCommandModal({ isOpen, onClose, editingCommand }: AddCommandModalProps) {
   const { toast } = useToast();
 
@@ -49,6 +70,8 @@ export default function AddCommandModal({ isOpen, onClose, editingCommand }: Add
   });
 
   useEffect(() => {
+    if (!isOpen) return; // modal未打开时不执行
+    
     if (editingCommand) {
       setValue("name", editingCommand.name);
       setValue("triggerType", editingCommand.triggerType);
@@ -56,9 +79,14 @@ export default function AddCommandModal({ isOpen, onClose, editingCommand }: Add
       setValue("description", editingCommand.description || "");
       setValue("isEnabled", editingCommand.isEnabled);
     } else {
+      // 新建指令时，设置默认值并自动选择第一个操作类型
       reset({ isEnabled: true, triggerType: 'reply' });
+      const firstReplyAction = actionTypesByTrigger.reply?.[0]?.value;
+      if (firstReplyAction) {
+        setValue("actionType", firstReplyAction);
+      }
     }
-  }, [editingCommand, setValue, reset]);
+  }, [isOpen, editingCommand, setValue, reset]);
 
   const createMutation = useMutation({
     mutationFn: async (data: InsertCommand) => {
@@ -113,6 +141,12 @@ export default function AddCommandModal({ isOpen, onClose, editingCommand }: Add
   };
 
   const isEnabled = watch("isEnabled");
+  const triggerType = watch("triggerType");
+
+  // 获取当前触发方式对应的操作类型列表
+  const availableActionTypes = triggerType 
+    ? actionTypesByTrigger[triggerType as keyof typeof actionTypesByTrigger] || []
+    : [];
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -137,15 +171,23 @@ export default function AddCommandModal({ isOpen, onClose, editingCommand }: Add
           <div className="space-y-2">
             <Label htmlFor="triggerType">触发方式 *</Label>
             <Select
-              defaultValue={editingCommand?.triggerType || 'reply'}
-              onValueChange={(value) => setValue("triggerType", value)}
+              value={watch("triggerType") || "reply"}
+              onValueChange={(value) => {
+                setValue("triggerType", value);
+                // 当触发方式改变时，自动选择第一个可用的操作类型
+                const newTriggerType = value as keyof typeof actionTypesByTrigger;
+                const firstAction = actionTypesByTrigger[newTriggerType]?.[0]?.value;
+                if (firstAction) {
+                  setValue("actionType", firstAction);
+                }
+              }}
             >
               <SelectTrigger data-testid="select-trigger-type">
                 <SelectValue placeholder="选择触发方式" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="direct">直接指令（管理员直接发送）</SelectItem>
                 <SelectItem value="reply">回复指令（管理员回复消息后发送）</SelectItem>
+                <SelectItem value="direct">直接指令（管理员直接发送）</SelectItem>
               </SelectContent>
             </Select>
             {errors.triggerType && (
@@ -156,26 +198,24 @@ export default function AddCommandModal({ isOpen, onClose, editingCommand }: Add
           <div className="space-y-2">
             <Label htmlFor="actionType">操作类型 *</Label>
             <Select
-              defaultValue={editingCommand?.actionType}
+              value={watch("actionType")}
               onValueChange={(value) => setValue("actionType", value)}
             >
               <SelectTrigger data-testid="select-action-type">
                 <SelectValue placeholder="选择操作类型" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="pin_message">置顶消息（需回复）</SelectItem>
-                <SelectItem value="unpin_message">取消置顶消息（需回复）</SelectItem>
-                <SelectItem value="unpin_all_messages">取消所有置顶（直接）</SelectItem>
-                <SelectItem value="set_title">设置用户头衔（需回复）</SelectItem>
-                <SelectItem value="remove_title">删除用户头衔（需回复）</SelectItem>
-                <SelectItem value="mute">禁言用户（需回复）</SelectItem>
-                <SelectItem value="kick">踢出用户（需回复）</SelectItem>
-                <SelectItem value="ban">封禁用户（需回复）</SelectItem>
-                <SelectItem value="delete_message">删除消息（需回复）</SelectItem>
-                <SelectItem value="create_invite_link">创建邀请链接（直接）</SelectItem>
-                <SelectItem value="set_group_name">设置群组名称（直接）</SelectItem>
-                <SelectItem value="set_group_description">设置群组简介（直接）</SelectItem>
-                <SelectItem value="delete_group_description">删除群组简介（直接）</SelectItem>
+                {availableActionTypes.length > 0 ? (
+                  availableActionTypes.map((actionType) => (
+                    <SelectItem key={actionType.value} value={actionType.value}>
+                      {actionType.label}
+                    </SelectItem>
+                  ))
+                ) : (
+                  <div className="p-2 text-sm text-muted-foreground text-center">
+                    请先选择触发方式
+                  </div>
+                )}
               </SelectContent>
             </Select>
             {errors.actionType && (
