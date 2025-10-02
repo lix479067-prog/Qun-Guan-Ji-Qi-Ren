@@ -140,20 +140,16 @@ export default function ActivityLogs() {
       {/* 左右布局：左侧系统日志，右侧群组日志 */}
       <div className="flex h-[600px]">
         {/* 左侧：系统日志（30%） */}
-        <div className="w-[30%] border-r border-border flex flex-col">
-          {/* 顶部标题区域 */}
-          <div className="bg-muted/30 px-4 border-b border-border flex-shrink-0">
-            <div className="flex items-center gap-2 h-[42px]">
+        <div className="w-[30%] border-r border-border flex flex-col h-full">
+          <div className="bg-muted/30 px-4 py-3 border-b border-border flex-shrink-0">
+            <div className="flex items-center gap-2">
               <Server className="w-4 h-4 text-muted-foreground" />
               <span className="text-sm font-medium text-foreground">📋 系统日志</span>
               <span className="text-xs text-muted-foreground">({systemLogs.length})</span>
             </div>
           </div>
-          
-          {/* 占位区域，匹配右侧导出按钮高度 */}
-          <div className="h-[41px] border-b border-border bg-muted/10 flex-shrink-0"></div>
 
-          <div className="flex-1 overflow-y-auto divide-y divide-border/50">
+          <div className="flex-1 overflow-y-auto divide-y divide-border/50 min-h-0">
             {systemLogs.length === 0 ? (
               <div className="p-6 text-center text-muted-foreground">
                 <FileText className="w-8 h-8 mx-auto mb-2 opacity-50" />
@@ -192,7 +188,7 @@ export default function ActivityLogs() {
         </div>
 
         {/* 右侧：群组日志（70%） */}
-        <div className="w-[70%] flex flex-col">
+        <div className="w-[70%] flex flex-col h-full">
           {groups.length === 0 ? (
             <div className="flex-1 flex items-center justify-center text-muted-foreground">
               <div className="text-center">
@@ -201,7 +197,7 @@ export default function ActivityLogs() {
               </div>
             </div>
           ) : (
-            <Tabs value={selectedGroupId} onValueChange={setSelectedGroupId} className="flex-1 flex flex-col">
+            <Tabs value={selectedGroupId} onValueChange={setSelectedGroupId} className="flex-1 flex flex-col min-h-0">
               {/* 群组标签页 */}
               <div className="bg-muted/30 px-4 border-b border-border">
                 <TabsList className="bg-transparent h-auto p-0 gap-1">
@@ -258,7 +254,7 @@ export default function ActivityLogs() {
                     </div>
 
                     {/* 日志列表 */}
-                    <div className="flex-1 overflow-y-auto divide-y divide-border/50">
+                    <div className="flex-1 overflow-y-auto divide-y divide-border/50 min-h-0">
                       {groupLogs.length === 0 ? (
                         <div className="p-8 text-center text-muted-foreground">
                           <FileText className="w-10 h-10 mx-auto mb-2 opacity-50" />
