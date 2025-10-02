@@ -45,7 +45,13 @@ Preferred communication style: Simple, everyday language.
 -   **Command Management:** Create custom commands with `direct` or `reply` trigger types.
     -   **Direct Commands:** Unpin all messages, create invite links, set group name/description.
     -   **Reply Commands:** Pin/unpin messages, set/remove user titles, mute/kick/ban users, delete messages.
--   **Activity Logging:** Detailed logs with group and user context, grouped display, and automated daily cleanup.
+-   **Activity Logging:** 
+    -   **Two-tier log system:** System logs (bot token changes, system events) and group logs (command executions per group)
+    -   **System logs:** Preserved permanently, never auto-deleted when groups are cleared
+    -   **Group logs:** Deleted when clearing groups, preserved when keeping groups; max 30 displayed per group
+    -   **Manual refresh:** No auto-polling; refresh button reloads all logs on demand
+    -   **Export functionality:** Per-group CSV export for 2-day or 10-day ranges with Chinese character support
+    -   **Automated cleanup:** Daily cleanup at 3 AM removes logs older than 10 days
 -   **Security:** Only group administrators can trigger bot commands.
 
 ## External Dependencies
