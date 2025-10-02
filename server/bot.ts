@@ -148,7 +148,10 @@ async function handleReplyCommand(ctx: Context, command: Command): Promise<void>
   const messageText = ctx.message.text;
   const replyToMessageId = ctx.message.reply_to_message.message_id;
   const targetUserId = ctx.message.reply_to_message.from?.id;
+  const targetUser = ctx.message.reply_to_message.from;
+  const targetUserName = targetUser ? `@${targetUser.username || targetUser.first_name}` : undefined;
   const chatTitle = "title" in ctx.chat ? ctx.chat.title : undefined;
+  const groupId = String(ctx.chat.id);
 
   switch (command.actionType) {
     case "pin_message":

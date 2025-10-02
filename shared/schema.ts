@@ -86,12 +86,15 @@ export const activityLogs = pgTable("activity_logs", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   action: text("action").notNull(),
   details: text("details"),
-  userName: text("user_name"),
-  groupTitle: text("group_title"),
+  userName: text("user_name"), // 执行操作的管理员
+  groupId: text("group_id"), // 群组ID
+  groupTitle: text("group_title"), // 群组名称
+  targetUserName: text("target_user_name"), // 被操作的用户（如被踢出、被封禁的用户）
   status: text("status").notNull(), // success, error
   timestamp: timestamp("timestamp").defaultNow().notNull(),
 }, (table) => [
   index("activity_logs_timestamp_idx").on(table.timestamp),
+  index("activity_logs_group_id_idx").on(table.groupId),
 ]);
 
 export const insertActivityLogSchema = createInsertSchema(activityLogs).omit({
