@@ -159,8 +159,8 @@ async function handleReplyCommand(ctx: Context, command: Command): Promise<void>
     case "pin_message":
       await ctx.pinChatMessage(replyToMessageId);
       await storage.createLog({
-        action: `执行指令：${command.name}`,
-        details: `消息已置顶`,
+        action: `📌 置顶消息`,
+        details: `消息ID: ${replyToMessageId}`,
         userName: `@${ctx.from.username || ctx.from.first_name}`,
         groupId: groupId,
         groupTitle: chatTitle,
@@ -172,8 +172,8 @@ async function handleReplyCommand(ctx: Context, command: Command): Promise<void>
     case "unpin_message":
       await ctx.unpinChatMessage(replyToMessageId);
       await storage.createLog({
-        action: `执行指令：${command.name}`,
-        details: `消息已取消置顶`,
+        action: `📌 取消置顶`,
+        details: `消息ID: ${replyToMessageId}`,
         userName: `@${ctx.from.username || ctx.from.first_name}`,
         groupId: groupId,
         groupTitle: chatTitle,
@@ -190,8 +190,8 @@ async function handleReplyCommand(ctx: Context, command: Command): Promise<void>
         await ctx.setChatAdministratorCustomTitle(targetUserId, customTitle);
         await ctx.reply(`✅ 头衔已设置为 "${customTitle}"`);
         await storage.createLog({
-          action: `执行指令：${command.name}`,
-          details: `用户头衔已设置为 "${customTitle}"`,
+          action: `👤 设置用户头衔`,
+          details: `头衔内容: "${customTitle}"`,
           userName: `@${ctx.from.username || ctx.from.first_name}`,
           groupId: groupId,
           groupTitle: chatTitle,
@@ -206,8 +206,8 @@ async function handleReplyCommand(ctx: Context, command: Command): Promise<void>
         await ctx.setChatAdministratorCustomTitle(targetUserId, "");
         await ctx.reply("✅ 用户头衔已删除");
         await storage.createLog({
-          action: `执行指令：${command.name}`,
-          details: `用户头衔已删除`,
+          action: `👤 删除用户头衔`,
+          details: `已清除用户的自定义头衔`,
           userName: `@${ctx.from.username || ctx.from.first_name}`,
           groupId: groupId,
           groupTitle: chatTitle,
@@ -219,16 +219,25 @@ async function handleReplyCommand(ctx: Context, command: Command): Promise<void>
 
     case "mute":
       if (targetUserId) {
-        const until = Math.floor(Date.now() / 1000) + 3600;
+        // 尝试从命令文本中解析禁言时长（分钟）
+        const muteMatch = messageText.match(/禁言\s*(\d+)/);
+        const muteMinutes = muteMatch ? parseInt(muteMatch[1]) : 60; // 默认60分钟
+        const until = Math.floor(Date.now() / 1000) + (muteMinutes * 60);
+        
         await ctx.restrictChatMember(targetUserId, {
           permissions: {
             can_send_messages: false,
           },
           until_date: until,
         });
+        
+        const durationText = muteMinutes >= 60 
+          ? `${Math.floor(muteMinutes / 60)}小时${muteMinutes % 60 > 0 ? (muteMinutes % 60) + '分钟' : ''}`
+          : `${muteMinutes}分钟`;
+        
         await storage.createLog({
-          action: `执行指令：${command.name}`,
-          details: `用户已被禁言1小时`,
+          action: `🔇 禁言用户`,
+          details: `禁言时长: ${durationText}`,
           userName: `@${ctx.from.username || ctx.from.first_name}`,
           groupId: groupId,
           groupTitle: chatTitle,
@@ -243,8 +252,8 @@ async function handleReplyCommand(ctx: Context, command: Command): Promise<void>
         await ctx.banChatMember(targetUserId);
         await ctx.unbanChatMember(targetUserId);
         await storage.createLog({
-          action: `执行指令：${command.name}`,
-          details: `用户已被踢出群组`,
+          action: `👢 踢出用户`,
+          details: `用户已被移出群组`,
           userName: `@${ctx.from.username || ctx.from.first_name}`,
           groupId: groupId,
           groupTitle: chatTitle,
@@ -258,7 +267,7 @@ async function handleReplyCommand(ctx: Context, command: Command): Promise<void>
       if (targetUserId) {
         await ctx.banChatMember(targetUserId);
         await storage.createLog({
-          action: `执行指令：${command.name}`,
+          action: `🚫 封禁用户`,
           details: `用户已被永久封禁`,
           userName: `@${ctx.from.username || ctx.from.first_name}`,
           groupId: groupId,
@@ -272,8 +281,8 @@ async function handleReplyCommand(ctx: Context, command: Command): Promise<void>
     case "delete_message":
       await ctx.deleteMessage(replyToMessageId);
       await storage.createLog({
-        action: `执行指令：${command.name}`,
-        details: `消息已删除`,
+        action: `🗑️ 删除消息`,
+        details: `消息ID: ${replyToMessageId}`,
         userName: `@${ctx.from.username || ctx.from.first_name}`,
         groupId: groupId,
         groupTitle: chatTitle,
@@ -296,8 +305,8 @@ async function handleDirectCommand(ctx: Context, command: Command): Promise<void
     case "unpin_all_messages":
       await ctx.unpinAllChatMessages();
       await storage.createLog({
-        action: `执行指令：${command.name}`,
-        details: `所有置顶消息已取消`,
+        action: `📌 取消全部置顶`,
+        details: `已取消群组所有置顶消息`,
         userName: `@${ctx.from.username || ctx.from.first_name}`,
         groupId: String(ctx.chat.id),
         groupTitle: chatTitle,
@@ -320,8 +329,8 @@ async function handleDirectCommand(ctx: Context, command: Command): Promise<void
       await ctx.reply(`邀请链接已创建：\n${inviteLink.invite_link}\n人数限制：${memberLimit}\n有效期：${expireMinutes}分钟`);
       
       await storage.createLog({
-        action: `执行指令：${command.name}`,
-        details: `创建邀请链接，限制${memberLimit}人，有效期${expireMinutes}分钟`,
+        action: `🔗 创建邀请链接`,
+        details: `人数限制: ${memberLimit}人 | 有效期: ${expireMinutes}分钟`,
         userName: `@${ctx.from.username || ctx.from.first_name}`,
         groupId: String(ctx.chat.id),
         groupTitle: chatTitle,
@@ -337,8 +346,8 @@ async function handleDirectCommand(ctx: Context, command: Command): Promise<void
       if (newName) {
         await ctx.setChatTitle(newName);
         await storage.createLog({
-          action: `执行指令：${command.name}`,
-          details: `群组名称已修改为 "${newName}"`,
+          action: `✏️ 修改群组名称`,
+          details: `新名称: "${newName}"`,
           userName: `@${ctx.from.username || ctx.from.first_name}`,
           groupId: String(ctx.chat.id),
           groupTitle: chatTitle,
@@ -355,8 +364,8 @@ async function handleDirectCommand(ctx: Context, command: Command): Promise<void
       if (newDesc) {
         await ctx.setChatDescription(newDesc);
         await storage.createLog({
-          action: `执行指令：${command.name}`,
-          details: `群组简介已修改`,
+          action: `📝 修改群组简介`,
+          details: `简介内容: "${newDesc.substring(0, 50)}${newDesc.length > 50 ? '...' : ''}"`,
           userName: `@${ctx.from.username || ctx.from.first_name}`,
           groupId: String(ctx.chat.id),
           groupTitle: chatTitle,
@@ -369,8 +378,8 @@ async function handleDirectCommand(ctx: Context, command: Command): Promise<void
     case "delete_group_description":
       await ctx.setChatDescription("");
       await storage.createLog({
-        action: `执行指令：${command.name}`,
-        details: `群组简介已删除`,
+        action: `📝 删除群组简介`,
+        details: `已清空群组简介内容`,
         userName: `@${ctx.from.username || ctx.from.first_name}`,
         groupId: String(ctx.chat.id),
         groupTitle: chatTitle,

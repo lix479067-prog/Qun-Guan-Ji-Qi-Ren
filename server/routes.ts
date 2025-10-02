@@ -257,11 +257,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       await storage.createLog({
-        action: "刷新群组信息",
+        action: "🔄 刷新群组信息",
         details: `群组 ${updatedGroup.groupTitle || updatedGroup.groupId} 信息已更新`,
         status: "success",
-        groupId: updatedGroup.groupId,
-        groupTitle: updatedGroup.groupTitle || undefined,
+        groupId: undefined,
+        groupTitle: undefined,
       });
 
       res.json(updatedGroup);
@@ -269,9 +269,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("Refresh group error:", error);
       
       await storage.createLog({
-        action: "刷新群组信息",
+        action: "🔄 刷新群组信息",
         details: `刷新失败: ${error.message}`,
         status: "error",
+        groupId: undefined,
+        groupTitle: undefined,
       });
       
       res.status(500).json({ message: error.message || "刷新群组信息失败" });
