@@ -420,11 +420,8 @@ export async function sendGroupActivationNotice(groupIds: string[]): Promise<voi
       await bot.telegram.sendMessage(
         groupId,
         "✅ 机器人已更新并激活成功！\n\n" +
-        "🔄 Token已更换\n" +
-        "🤖 当前机器人正常运行中\n" +
-        "📝 群组白名单已保留\n" +
-        "⚡ 所有指令配置保持不变\n\n" +
-        "您可以继续使用机器人管理群组。"
+        "⚡️ 所有指令配置保持不变\n" +
+        "接下来的管理工作由我来为您完成！"
       );
       successGroups.push(groupId);
       console.log(`✅ Activation notice sent to group ${groupId}`);
