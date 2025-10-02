@@ -61,6 +61,7 @@ Preferred communication style: Simple, everyday language.
     -   **Manual refresh:** No auto-polling; refresh button reloads all logs on demand
     -   **Export functionality:** Per-group CSV export for 2-day or 10-day ranges with Chinese character support
     -   **Automated cleanup:** Daily cleanup at 3 AM removes logs older than 10 days
+    -   **Log display format:** Action field shows command name (e.g., "/pin", "/mute"), details field shows operation type with emoji (e.g., "📌 置顶消息")
 -   **Security:** Only group administrators can trigger bot commands.
 
 ## External Dependencies
