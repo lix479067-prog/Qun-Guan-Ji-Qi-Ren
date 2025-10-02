@@ -141,7 +141,7 @@ export default function ActivityLogs() {
       <div className="flex h-[600px]">
         {/* 左侧：系统日志（30%） */}
         <div className="w-[30%] border-r border-border flex flex-col">
-          <div className="bg-muted/30 px-4 py-3 border-b border-border">
+          <div className="bg-muted/30 px-4 py-3 border-b border-border flex-shrink-0">
             <div className="flex items-center gap-2">
               <Server className="w-4 h-4 text-muted-foreground" />
               <span className="text-sm font-medium text-foreground">📋 系统日志</span>
@@ -149,7 +149,7 @@ export default function ActivityLogs() {
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto divide-y divide-border/50">
+          <div className="overflow-y-auto divide-y divide-border/50" style={{ height: 'calc(600px - 49px)' }}>
             {systemLogs.length === 0 ? (
               <div className="p-6 text-center text-muted-foreground">
                 <FileText className="w-8 h-8 mx-auto mb-2 opacity-50" />
