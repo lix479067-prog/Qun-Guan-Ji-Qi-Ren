@@ -1,13 +1,88 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { CheckCircle, AlertTriangle, FileText, Users } from "lucide-react";
-import type { ActivityLog } from "@shared/schema";
+import { CheckCircle, AlertTriangle, FileText, Users, RefreshCw, Download, Server } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import type { ActivityLog, GroupWhitelist } from "@shared/schema";
 import { formatDistanceToNow } from "date-fns";
 import { zhCN } from "date-fns/locale";
 
-export default function ActivityLog() {
-  const { data: logs = [] } = useQuery<ActivityLog[]>({
-    queryKey: ["/api/logs"],
+export default function ActivityLogs() {
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // 获取系统日志（不启用自动刷新）
+  const { data: systemLogs = [], refetch: refetchSystemLogs } = useQuery<ActivityLog[]>({
+    queryKey: ["/api/logs/system"],
+    refetchInterval: false,
+    refetchOnWindowFocus: false,
   });
+
+  // 获取所有群组
+  const { data: groups = [], refetch: refetchGroups } = useQuery<GroupWhitelist[]>({
+    queryKey: ["/api/groups"],
+    refetchInterval: false,
+    refetchOnWindowFocus: false,
+  });
+
+  // 获取每个群组的日志（每组最多30条）
+  const { data: groupLogsMap = {}, refetch: refetchGroupLogs } = useQuery<Record<string, ActivityLog[]>>({
+    queryKey: ["/api/logs/groups", groups.map(g => g.groupId).join(",")],
+    enabled: groups.length > 0,
+    refetchInterval: false,
+    refetchOnWindowFocus: false,
+    queryFn: async () => {
+      const result: Record<string, ActivityLog[]> = {};
+      
+      // 并行获取所有群组的日志
+      await Promise.all(
+        groups.map(async (group) => {
+          try {
+            const response = await fetch(`/api/logs/group/${group.groupId}?limit=30`, {
+              credentials: "include",
+            });
+            if (response.ok) {
+              result[group.groupId] = await response.json();
+            }
+          } catch (error) {
+            console.error(`Failed to fetch logs for group ${group.groupId}:`, error);
+          }
+        })
+      );
+      
+      return result;
+    },
+  });
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await Promise.all([
+      refetchSystemLogs(),
+      refetchGroups(),
+      refetchGroupLogs(),
+    ]);
+    setIsRefreshing(false);
+  };
+
+  const handleExport = async (groupId: string, days: 2 | 10) => {
+    try {
+      const response = await fetch(`/api/logs/group/${groupId}/export?days=${days}`, {
+        credentials: "include",
+      });
+      
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `group_${groupId}_logs_${days}days.csv`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      }
+    } catch (error) {
+      console.error("Export failed:", error);
+    }
+  };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -31,102 +106,192 @@ export default function ActivityLog() {
     }
   };
 
-  // 按群组ID分组日志
-  const groupedLogs = logs.reduce((acc, log) => {
-    const groupKey = log.groupId || "未知群组";
-    if (!acc[groupKey]) {
-      acc[groupKey] = {
-        groupTitle: log.groupTitle || "未知群组",
-        logs: []
-      };
-    }
-    acc[groupKey].logs.push(log);
-    return acc;
-  }, {} as Record<string, { groupTitle: string; logs: ActivityLog[] }>);
-
   return (
     <div className="bg-card border border-border rounded-lg">
+      {/* Header */}
       <div className="p-6 border-b border-border">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-lg font-semibold text-foreground">群组活动日志</h3>
-            <p className="text-sm text-muted-foreground mt-1">管理员指令操作记录（保留10天）</p>
+            <h3 className="text-lg font-semibold text-foreground">活动日志</h3>
+            <p className="text-sm text-muted-foreground mt-1">系统日志和群组操作记录（保留10天）</p>
           </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            data-testid="button-refresh-logs"
+          >
+            <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? "animate-spin" : ""}`} />
+            刷新
+          </Button>
         </div>
       </div>
 
-      <div className="max-h-[500px] overflow-y-auto">
-        {logs.length === 0 ? (
-          <div className="p-8 text-center text-muted-foreground">
-            <FileText className="w-12 h-12 mx-auto mb-2 opacity-50" />
-            <p>暂无活动记录</p>
+      <div className="max-h-[600px] overflow-y-auto">
+        {/* 系统日志区域 */}
+        <div className="border-b border-border">
+          <div className="bg-muted/30 px-4 py-2 sticky top-0 z-10">
+            <div className="flex items-center gap-2">
+              <Server className="w-4 h-4 text-muted-foreground" />
+              <span className="text-sm font-medium text-foreground">📋 系统日志</span>
+              <span className="text-xs text-muted-foreground">({systemLogs.length}条记录)</span>
+            </div>
           </div>
-        ) : (
-          Object.entries(groupedLogs).map(([groupId, { groupTitle, logs: groupLogs }]) => (
-            <div key={groupId} className="border-b border-border last:border-b-0">
-              {/* 群组标题 */}
-              <div className="bg-muted/30 px-4 py-2 sticky top-0 z-10">
-                <div className="flex items-center gap-2">
-                  <Users className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-sm font-medium text-foreground">{groupTitle}</span>
-                  <span className="text-xs text-muted-foreground">({groupLogs.length}条记录)</span>
-                </div>
+
+          <div className="divide-y divide-border/50">
+            {systemLogs.length === 0 ? (
+              <div className="p-6 text-center text-muted-foreground">
+                <FileText className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                <p className="text-sm">暂无系统日志</p>
               </div>
-
-              {/* 群组日志列表 */}
-              <div className="divide-y divide-border/50">
-                {groupLogs.map((log) => (
-                  <div
-                    key={log.id}
-                    className="p-3 hover:bg-muted/30 transition-colors"
-                    data-testid={`log-item-${log.id}`}
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className={`w-8 h-8 rounded flex items-center justify-center flex-shrink-0 ${getStatusColor(log.status)}`}>
-                        {getStatusIcon(log.status)}
+            ) : (
+              systemLogs.map((log) => (
+                <div
+                  key={log.id}
+                  className="p-3 hover:bg-muted/30 transition-colors"
+                  data-testid={`log-system-${log.id}`}
+                >
+                  <div className="flex items-start gap-3">
+                    <div className={`w-8 h-8 rounded flex items-center justify-center flex-shrink-0 ${getStatusColor(log.status)}`}>
+                      {getStatusIcon(log.status)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-sm font-medium text-foreground">
+                          {log.action}
+                        </span>
+                        <span className={`px-1.5 py-0.5 text-xs rounded ${getStatusColor(log.status)}`}>
+                          {log.status === "success" ? "成功" : "失败"}
+                        </span>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-sm font-medium text-foreground" data-testid={`text-log-${log.id}-action`}>
-                            {log.action}
-                          </span>
-                          <span className={`px-1.5 py-0.5 text-xs rounded ${getStatusColor(log.status)}`}>
-                            {log.status === "success" ? "成功" : "失败"}
-                          </span>
-                        </div>
 
-                        {/* 操作详情 */}
-                        <div className="text-xs text-muted-foreground mt-1 space-y-0.5">
-                          {log.details && (
-                            <p>{log.details}</p>
-                          )}
-                          
-                          <div className="flex items-center gap-2 flex-wrap">
-                            {log.userName && (
-                              <span className="text-primary">{log.userName}</span>
-                            )}
-                            {log.targetUserName && (
-                              <>
-                                <span className="text-muted-foreground/60">→</span>
-                                <span className="text-orange-400">{log.targetUserName}</span>
-                              </>
-                            )}
-                            <span className="text-muted-foreground/60">·</span>
-                            <span>
-                              {formatDistanceToNow(new Date(log.timestamp), {
-                                addSuffix: true,
-                                locale: zhCN,
-                              })}
-                            </span>
-                          </div>
-                        </div>
+                      {log.details && (
+                        <p className="text-xs text-muted-foreground mt-1">{log.details}</p>
+                      )}
+                      
+                      <div className="text-xs text-muted-foreground mt-1">
+                        {formatDistanceToNow(new Date(log.timestamp), {
+                          addSuffix: true,
+                          locale: zhCN,
+                        })}
                       </div>
                     </div>
                   </div>
-                ))}
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* 群组日志区域 */}
+        {groups.length === 0 ? (
+          <div className="p-8 text-center text-muted-foreground">
+            <Users className="w-12 h-12 mx-auto mb-2 opacity-50" />
+            <p>暂无群组白名单</p>
+          </div>
+        ) : (
+          groups.map((group) => {
+            const groupLogs = groupLogsMap[group.groupId] || [];
+            
+            return (
+              <div key={group.groupId} className="border-b border-border last:border-b-0">
+                {/* 群组标题 */}
+                <div className="bg-muted/30 px-4 py-2 sticky top-0 z-10">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <Users className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                      <span className="text-sm font-medium text-foreground truncate">
+                        👥 {group.groupTitle || "未命名群组"}
+                      </span>
+                      <span className="text-xs text-muted-foreground flex-shrink-0">
+                        ({groupLogs.length}条)
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1 flex-shrink-0">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleExport(group.groupId, 2)}
+                        className="h-7 text-xs"
+                        data-testid={`button-export-2days-${group.groupId}`}
+                      >
+                        <Download className="w-3 h-3 mr-1" />
+                        导出2天
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleExport(group.groupId, 10)}
+                        className="h-7 text-xs"
+                        data-testid={`button-export-10days-${group.groupId}`}
+                      >
+                        <Download className="w-3 h-3 mr-1" />
+                        导出10天
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 群组日志列表 */}
+                <div className="divide-y divide-border/50">
+                  {groupLogs.length === 0 ? (
+                    <div className="p-6 text-center text-muted-foreground">
+                      <FileText className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                      <p className="text-sm">该群组暂无操作记录</p>
+                    </div>
+                  ) : (
+                    groupLogs.map((log) => (
+                      <div
+                        key={log.id}
+                        className="p-3 hover:bg-muted/30 transition-colors"
+                        data-testid={`log-group-${log.id}`}
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className={`w-8 h-8 rounded flex items-center justify-center flex-shrink-0 ${getStatusColor(log.status)}`}>
+                            {getStatusIcon(log.status)}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="text-sm font-medium text-foreground">
+                                {log.action}
+                              </span>
+                              <span className={`px-1.5 py-0.5 text-xs rounded ${getStatusColor(log.status)}`}>
+                                {log.status === "success" ? "成功" : "失败"}
+                              </span>
+                            </div>
+
+                            <div className="text-xs text-muted-foreground mt-1 space-y-0.5">
+                              {log.details && <p>{log.details}</p>}
+                              
+                              <div className="flex items-center gap-2 flex-wrap">
+                                {log.userName && (
+                                  <span className="text-primary">{log.userName}</span>
+                                )}
+                                {log.targetUserName && (
+                                  <>
+                                    <span className="text-muted-foreground/60">→</span>
+                                    <span className="text-orange-400">{log.targetUserName}</span>
+                                  </>
+                                )}
+                                <span className="text-muted-foreground/60">·</span>
+                                <span>
+                                  {formatDistanceToNow(new Date(log.timestamp), {
+                                    addSuffix: true,
+                                    locale: zhCN,
+                                  })}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
               </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
     </div>

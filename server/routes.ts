@@ -111,13 +111,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // 只有在机器人成功启动后，才清空群组白名单（避免token无效时数据丢失）
       if (clearGroups === true) {
         const groups = await storage.getAllGroups();
+        
+        // 删除所有群组
         for (const group of groups) {
           await storage.deleteGroup(group.id);
         }
         
+        // 同时删除所有群组相关的日志
+        const deletedLogsCount = await storage.deleteAllGroupLogs();
+        
         await storage.createLog({
           action: "更换机器人Token",
-          details: `机器人已更新，已清空 ${groups.length} 个群组白名单`,
+          details: `机器人已更新，已清空 ${groups.length} 个群组白名单，删除 ${deletedLogsCount} 条群组日志`,
           status: "success",
         });
       } else {
@@ -346,6 +351,80 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(logs);
     } catch (error) {
       res.status(500).json({ message: "获取日志失败" });
+    }
+  });
+
+  // Get system logs (groupId is null)
+  app.get("/api/logs/system", isAuthenticated, async (req, res) => {
+    try {
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : 50;
+      const logs = await storage.getSystemLogs(limit);
+      res.json(logs);
+    } catch (error) {
+      res.status(500).json({ message: "获取系统日志失败" });
+    }
+  });
+
+  // Get logs for a specific group
+  app.get("/api/logs/group/:groupId", isAuthenticated, async (req, res) => {
+    try {
+      const { groupId } = req.params;
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : 30;
+      const logs = await storage.getGroupLogs(groupId, limit);
+      res.json(logs);
+    } catch (error) {
+      res.status(500).json({ message: "获取群组日志失败" });
+    }
+  });
+
+  // Export group logs (2 days or 10 days)
+  app.get("/api/logs/group/:groupId/export", isAuthenticated, async (req, res) => {
+    try {
+      const { groupId } = req.params;
+      const days = req.query.days ? parseInt(req.query.days as string) : 2;
+      
+      // Validate days parameter
+      if (days !== 2 && days !== 10) {
+        return res.status(400).json({ message: "days参数必须是2或10" });
+      }
+      
+      // Get all logs for this group (no limit)
+      const allLogs = await storage.getGroupLogs(groupId, 10000);
+      
+      // Filter logs by date range
+      const cutoffDate = new Date();
+      cutoffDate.setDate(cutoffDate.getDate() - days);
+      
+      const filteredLogs = allLogs.filter(log => new Date(log.timestamp) >= cutoffDate);
+      
+      // Get group info
+      const group = await storage.getGroupByGroupId(groupId);
+      const groupTitle = group?.groupTitle || groupId;
+      
+      // Generate CSV content
+      const csvHeader = "时间,操作,操作员,目标用户,详情,状态\n";
+      const csvRows = filteredLogs.map(log => {
+        const timestamp = new Date(log.timestamp).toLocaleString('zh-CN');
+        const action = log.action || "";
+        const userName = log.userName || "";
+        const targetUserName = log.targetUserName || "";
+        const details = (log.details || "").replace(/"/g, '""');
+        const status = log.status || "";
+        return `"${timestamp}","${action}","${userName}","${targetUserName}","${details}","${status}"`;
+      }).join("\n");
+      
+      const csvContent = csvHeader + csvRows;
+      
+      // Set response headers for file download
+      const filename = `${groupTitle}_logs_${days}days_${new Date().toISOString().split('T')[0]}.csv`;
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+      res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(filename)}"`);
+      
+      // Send CSV with BOM for Excel compatibility
+      res.send('\uFEFF' + csvContent);
+    } catch (error) {
+      console.error("Export logs error:", error);
+      res.status(500).json({ message: "导出日志失败" });
     }
   });
 

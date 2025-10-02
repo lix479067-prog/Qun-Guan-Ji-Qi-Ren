@@ -47,8 +47,12 @@ export interface IStorage {
 
   // Activity log operations
   getRecentLogs(limit?: number): Promise<ActivityLog[]>;
+  getSystemLogs(limit?: number): Promise<ActivityLog[]>;
+  getGroupLogs(groupId: string, limit?: number): Promise<ActivityLog[]>;
   createLog(log: InsertActivityLog): Promise<ActivityLog>;
   cleanOldLogs(daysToKeep?: number): Promise<number>;
+  deleteGroupLogs(groupId: string): Promise<number>;
+  deleteAllGroupLogs(): Promise<number>;
 
   // Statistics
   getStats(): Promise<{
@@ -173,6 +177,24 @@ export class DatabaseStorage implements IStorage {
       .limit(limit);
   }
 
+  async getSystemLogs(limit: number = 50): Promise<ActivityLog[]> {
+    return await db
+      .select()
+      .from(activityLogs)
+      .where(sql`${activityLogs.groupId} IS NULL`)
+      .orderBy(desc(activityLogs.timestamp))
+      .limit(limit);
+  }
+
+  async getGroupLogs(groupId: string, limit: number = 30): Promise<ActivityLog[]> {
+    return await db
+      .select()
+      .from(activityLogs)
+      .where(eq(activityLogs.groupId, groupId))
+      .orderBy(desc(activityLogs.timestamp))
+      .limit(limit);
+  }
+
   async createLog(log: InsertActivityLog): Promise<ActivityLog> {
     const [created] = await db.insert(activityLogs).values(log).returning();
     return created;
@@ -185,6 +207,24 @@ export class DatabaseStorage implements IStorage {
     const deleted = await db
       .delete(activityLogs)
       .where(sql`${activityLogs.timestamp} < ${cutoffDate}`)
+      .returning();
+    
+    return deleted.length;
+  }
+
+  async deleteGroupLogs(groupId: string): Promise<number> {
+    const deleted = await db
+      .delete(activityLogs)
+      .where(eq(activityLogs.groupId, groupId))
+      .returning();
+    
+    return deleted.length;
+  }
+
+  async deleteAllGroupLogs(): Promise<number> {
+    const deleted = await db
+      .delete(activityLogs)
+      .where(sql`${activityLogs.groupId} IS NOT NULL`)
       .returning();
     
     return deleted.length;
