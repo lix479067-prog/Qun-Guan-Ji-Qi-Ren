@@ -4,7 +4,7 @@ import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { storage } from "./storage";
 import { hashPassword, verifyPassword, isAuthenticated } from "./auth";
-import { startBot, stopBot, getBotStatus, getBotInstance } from "./bot";
+import { startBot, stopBot, getBotStatus, getBotInstance, sendGroupActivationNotice } from "./bot";
 import { insertGroupWhitelistSchema, insertCommandSchema } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -121,11 +121,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
           status: "success",
         });
       } else {
+        // 保留群组白名单时，向所有白名单群组发送激活通知
+        const groups = await storage.getAllGroups();
+        const groupIds = groups.map(g => g.groupId);
+        
         await storage.createLog({
           action: "更换机器人Token",
-          details: `机器人Token已更新，群组白名单已保留`,
+          details: `机器人Token已更新，群组白名单已保留 (共${groups.length}个群组)`,
           status: "success",
         });
+        
+        // 异步发送激活通知，不阻塞响应
+        if (groupIds.length > 0) {
+          sendGroupActivationNotice(groupIds).catch(error => {
+            console.error("发送激活通知失败:", error);
+          });
+        }
       }
 
       const config = await storage.getBotConfig();

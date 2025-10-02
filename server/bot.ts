@@ -406,6 +406,41 @@ export function getBotInstance(): Telegraf | null {
   return bot;
 }
 
+export async function sendGroupActivationNotice(groupIds: string[]): Promise<void> {
+  if (!bot) {
+    console.log("⚠️ Bot not running, cannot send activation notice");
+    return;
+  }
+
+  const successGroups: string[] = [];
+  const failedGroups: { groupId: string; error: string }[] = [];
+
+  for (const groupId of groupIds) {
+    try {
+      await bot.telegram.sendMessage(
+        groupId,
+        "✅ 机器人已更新并激活成功！\n\n" +
+        "🔄 Token已更换\n" +
+        "🤖 当前机器人正常运行中\n" +
+        "📝 群组白名单已保留\n" +
+        "⚡ 所有指令配置保持不变\n\n" +
+        "您可以继续使用机器人管理群组。"
+      );
+      successGroups.push(groupId);
+      console.log(`✅ Activation notice sent to group ${groupId}`);
+    } catch (error: any) {
+      failedGroups.push({ groupId, error: error.message });
+      console.log(`❌ Failed to send notice to group ${groupId}: ${error.message}`);
+    }
+  }
+
+  await storage.createLog({
+    action: "发送激活通知",
+    details: `成功: ${successGroups.length}个群组, 失败: ${failedGroups.length}个群组`,
+    status: successGroups.length > 0 ? "success" : "error",
+  });
+}
+
 (async () => {
   console.log("🤖 Checking for bot configuration...");
   const config = await storage.getBotConfig();
