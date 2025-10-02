@@ -5,12 +5,25 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { RefreshCw, User, Tag, Zap, Clock, BarChart3 } from "lucide-react";
+import { RefreshCw, User, Tag, Zap, Clock, BarChart3, AlertTriangle } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export default function BotConfig() {
   const { toast } = useToast();
   const [showToken, setShowToken] = useState(false);
   const [tokenInput, setTokenInput] = useState("");
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [clearGroups, setClearGroups] = useState(false);
 
   const { data: botData } = useQuery<{
     config: any;
@@ -20,17 +33,20 @@ export default function BotConfig() {
   });
 
   const updateTokenMutation = useMutation({
-    mutationFn: async (token: string) => {
-      const res = await apiRequest("POST", "/api/bot/config", { token });
+    mutationFn: async ({ token, clearGroups }: { token: string; clearGroups: boolean }) => {
+      const res = await apiRequest("POST", "/api/bot/config", { token, clearGroups });
       return await res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/bot/config"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/groups"] });
       toast({
         title: "Token 已更新",
         description: "机器人已成功重启",
       });
       setTokenInput("");
+      setShowConfirmDialog(false);
+      setClearGroups(false);
     },
     onError: (error: Error) => {
       toast({
@@ -49,7 +65,11 @@ export default function BotConfig() {
       });
       return;
     }
-    updateTokenMutation.mutate(tokenInput);
+    setShowConfirmDialog(true);
+  };
+
+  const handleConfirmUpdate = () => {
+    updateTokenMutation.mutate({ token: tokenInput, clearGroups });
   };
 
   return (
@@ -165,6 +185,56 @@ export default function BotConfig() {
           </div>
         </div>
       </div>
+
+      {/* 确认对话框 */}
+      <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+        <AlertDialogContent data-testid="dialog-confirm-token-update">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-yellow-500" />
+              更换机器人Token？
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-3 pt-2">
+              <p className="text-foreground font-medium">⚠️ 更换后会发生：</p>
+              <div className="space-y-2 pl-4">
+                <p className="flex items-center gap-2">
+                  <span className="text-accent">✓</span>
+                  <span>指令配置保留（可继续使用）</span>
+                </p>
+                <div className="flex items-start gap-2">
+                  <Checkbox
+                    id="clear-groups"
+                    checked={clearGroups}
+                    onCheckedChange={(checked) => setClearGroups(checked as boolean)}
+                    data-testid="checkbox-clear-groups"
+                  />
+                  <div className="grid gap-1.5 leading-none">
+                    <label
+                      htmlFor="clear-groups"
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                    >
+                      清空群组白名单
+                    </label>
+                    <p className="text-xs text-muted-foreground">
+                      建议勾选：新机器人需要重新授权群组
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel data-testid="button-cancel-update">取消</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmUpdate}
+              disabled={updateTokenMutation.isPending}
+              data-testid="button-confirm-update"
+            >
+              {updateTokenMutation.isPending ? "更新中..." : "确认更换"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -98,20 +98,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/bot/config", isAuthenticated, async (req, res) => {
     try {
-      const { token } = req.body;
+      const { token, clearGroups } = req.body;
 
       if (!token) {
         return res.status(400).json({ message: "Token不能为空" });
       }
 
-      // Stop existing bot and start new one
+      // Stop existing bot and start new one FIRST
       await stopBot();
       await startBot(token);
+
+      // 只有在机器人成功启动后，才清空群组白名单（避免token无效时数据丢失）
+      if (clearGroups === true) {
+        const groups = await storage.getAllGroups();
+        for (const group of groups) {
+          await storage.deleteGroup(group.id);
+        }
+        
+        await storage.createLog({
+          action: "更换机器人Token",
+          details: `机器人已更新，已清空 ${groups.length} 个群组白名单`,
+          status: "success",
+        });
+      } else {
+        await storage.createLog({
+          action: "更换机器人Token",
+          details: `机器人Token已更新，群组白名单已保留`,
+          status: "success",
+        });
+      }
 
       const config = await storage.getBotConfig();
       res.json(config);
     } catch (error: any) {
       console.error("Bot config error:", error);
+      
+      await storage.createLog({
+        action: "更换机器人Token",
+        details: `更新失败: ${error.message}`,
+        status: "error",
+      });
+      
       res.status(500).json({ message: error.message || "更新机器人配置失败" });
     }
   });
