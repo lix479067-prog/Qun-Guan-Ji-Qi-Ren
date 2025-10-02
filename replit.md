@@ -41,14 +41,21 @@ Preferred communication style: Simple, everyday language.
 ### Feature Specifications
 
 -   **Bot Configuration:** Update bot token, with confirmation dialogs and options to clear group whitelist.
--   **Group Management:** Whitelist specific Telegram groups; bot only operates in whitelisted groups.
--   **Command Management:** Create custom commands with `direct` or `reply` trigger types.
-    -   **Direct Commands:** Unpin all messages, create invite links, set group name/description.
-    -   **Reply Commands:** Pin/unpin messages, set/remove user titles, mute/kick/ban users, delete messages.
+-   **Group Management:** 
+    -   Whitelist specific Telegram groups; bot only operates in whitelisted groups
+    -   **Search functionality:** Real-time search by group ID or group name (case-insensitive)
+    -   **Scrollable list:** Fixed 500px height container with overflow scrolling for many groups
+    -   **Refresh groups:** Update group info (title, member count) from Telegram API
+-   **Command Management:** 
+    -   Create custom commands with `direct` or `reply` trigger types
+    -   **Direct Commands:** Unpin all messages, create invite links, set group name/description
+    -   **Reply Commands:** Pin/unpin messages, set/remove user titles, mute/kick/ban users, delete messages
+    -   **Scrollable list:** Fixed 500px height container with overflow scrolling for many commands
 -   **Activity Logging:** 
     -   **Two-tier log system:** System logs (bot token changes, system events) and group logs (command executions per group)
-    -   **System logs:** Preserved permanently, never auto-deleted when groups are cleared
+    -   **System logs:** Preserved permanently, never auto-deleted when groups are cleared; includes "🔄 刷新群组信息" actions
     -   **Group logs:** Deleted when clearing groups, preserved when keeping groups; max 30 displayed per group
+    -   **Layout:** Horizontal split (30% system logs, 70% group logs with tabs), both independently scrollable in 600px container
     -   **Manual refresh:** No auto-polling; refresh button reloads all logs on demand
     -   **Export functionality:** Per-group CSV export for 2-day or 10-day ranges with Chinese character support
     -   **Automated cleanup:** Daily cleanup at 3 AM removes logs older than 10 days
