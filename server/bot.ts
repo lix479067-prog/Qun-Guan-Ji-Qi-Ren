@@ -153,7 +153,6 @@ async function handleReplyCommand(ctx: Context, command: Command): Promise<void>
   switch (command.actionType) {
     case "pin_message":
       await ctx.pinChatMessage(replyToMessageId);
-      await ctx.reply("✅ 消息已置顶");
       await storage.createLog({
         action: `执行指令：${command.name}`,
         details: `消息已置顶`,
@@ -165,7 +164,6 @@ async function handleReplyCommand(ctx: Context, command: Command): Promise<void>
 
     case "unpin_message":
       await ctx.unpinChatMessage(replyToMessageId);
-      await ctx.reply("✅ 消息已取消置顶");
       await storage.createLog({
         action: `执行指令：${command.name}`,
         details: `消息已取消置顶`,
