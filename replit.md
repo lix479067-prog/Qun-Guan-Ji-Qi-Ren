@@ -244,7 +244,17 @@ Supported operations:
 
 ## Recent Changes
 
-### 2025-10-02 (Latest Update)
+### 2025-10-02 (Latest Update - Part 2)
+- **Added bot token replacement confirmation dialog:**
+  - Confirmation dialog appears when updating bot token with warning about what happens
+  - Optional checkbox to clear group whitelist (recommended for new bots, unchecked by default)
+  - Command configurations are always preserved during token updates
+  - Critical data loss prevention: groups only deleted AFTER bot successfully starts
+  - If new token is invalid, bot fails to start and groups remain intact
+  - Activity logs record token update success/failure and whether groups were cleared
+  - UI includes AlertDialog with checkbox state management and proper error handling
+
+### 2025-10-02 (Earlier Update)
 - **Enhanced activity logging system:**
   - Added groupId and targetUserName fields to activity logs for detailed context tracking
   - Updated all bot command handlers to record group ID and target user information
@@ -295,6 +305,9 @@ All core features have been tested and verified:
 - ✅ Reply command triggers (verified triggerType='reply' persisted in DB)
 - ✅ Activity logs display
 - ✅ Statistics dashboard
+- ✅ Bot token replacement with confirmation dialog
+- ✅ Optional group whitelist clearing during token update
+- ✅ Data loss prevention (groups preserved when invalid token fails to start)
 
 ## Next Steps
 
