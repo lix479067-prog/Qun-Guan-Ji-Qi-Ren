@@ -89,8 +89,11 @@ Preferred communication style: Simple, everyday language.
 - Includes trigger conditions and response templates
 
 *Activity Logs Table*
-- Records all bot and system activities
+- Records all bot and system activities with group context
+- Stores groupId, groupTitle, and targetUserName for detailed tracking
 - Categorizes by action type and status (success/error)
+- Indexed on timestamp and groupId for efficient querying
+- Automatic retention: logs older than 10 days are deleted daily at 3 AM
 - Provides audit trail for troubleshooting and monitoring
 
 **Storage Layer**
@@ -241,7 +244,16 @@ Supported operations:
 
 ## Recent Changes
 
-### 2025-10-01 (Latest Update - Part 2)
+### 2025-10-02 (Latest Update)
+- **Enhanced activity logging system:**
+  - Added groupId and targetUserName fields to activity logs for detailed context tracking
+  - Updated all bot command handlers to record group ID and target user information
+  - Redesigned frontend ActivityLog component to display logs grouped by Telegram group
+  - Implemented automatic log cleanup: logs older than 10 days are deleted daily
+  - Added scheduled cleanup task that runs every day at 3 AM
+  - Database indexes on timestamp and groupId for efficient querying and retention management
+
+### 2025-10-01 (Earlier Update - Part 2)
 - **Added ban user operation:**
   - New "ban" action type for permanently banning users (cannot rejoin)
   - Differentiated from "kick" which allows users to rejoin
