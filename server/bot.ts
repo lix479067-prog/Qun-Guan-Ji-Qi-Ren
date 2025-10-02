@@ -102,7 +102,9 @@ export async function startBot(token: string): Promise<void> {
         action: "指令执行失败",
         details: error.message || "未知错误",
         userName: ctx.from?.username ? `@${ctx.from.username}` : undefined,
+        groupId: String(ctx.chat.id),
         groupTitle: "title" in ctx.chat ? ctx.chat.title : undefined,
+        targetUserName: undefined,
         status: "error",
       });
     }
@@ -160,7 +162,9 @@ async function handleReplyCommand(ctx: Context, command: Command): Promise<void>
         action: `执行指令：${command.name}`,
         details: `消息已置顶`,
         userName: `@${ctx.from.username || ctx.from.first_name}`,
+        groupId: groupId,
         groupTitle: chatTitle,
+        targetUserName: targetUserName,
         status: "success",
       });
       break;
@@ -171,7 +175,9 @@ async function handleReplyCommand(ctx: Context, command: Command): Promise<void>
         action: `执行指令：${command.name}`,
         details: `消息已取消置顶`,
         userName: `@${ctx.from.username || ctx.from.first_name}`,
+        groupId: groupId,
         groupTitle: chatTitle,
+        targetUserName: targetUserName,
         status: "success",
       });
       break;
@@ -187,7 +193,9 @@ async function handleReplyCommand(ctx: Context, command: Command): Promise<void>
           action: `执行指令：${command.name}`,
           details: `用户头衔已设置为 "${customTitle}"`,
           userName: `@${ctx.from.username || ctx.from.first_name}`,
+          groupId: groupId,
           groupTitle: chatTitle,
+          targetUserName: targetUserName,
           status: "success",
         });
       }
@@ -201,7 +209,9 @@ async function handleReplyCommand(ctx: Context, command: Command): Promise<void>
           action: `执行指令：${command.name}`,
           details: `用户头衔已删除`,
           userName: `@${ctx.from.username || ctx.from.first_name}`,
+          groupId: groupId,
           groupTitle: chatTitle,
+          targetUserName: targetUserName,
           status: "success",
         });
       }
@@ -220,7 +230,9 @@ async function handleReplyCommand(ctx: Context, command: Command): Promise<void>
           action: `执行指令：${command.name}`,
           details: `用户已被禁言1小时`,
           userName: `@${ctx.from.username || ctx.from.first_name}`,
+          groupId: groupId,
           groupTitle: chatTitle,
+          targetUserName: targetUserName,
           status: "success",
         });
       }
@@ -234,7 +246,9 @@ async function handleReplyCommand(ctx: Context, command: Command): Promise<void>
           action: `执行指令：${command.name}`,
           details: `用户已被踢出群组`,
           userName: `@${ctx.from.username || ctx.from.first_name}`,
+          groupId: groupId,
           groupTitle: chatTitle,
+          targetUserName: targetUserName,
           status: "success",
         });
       }
@@ -247,7 +261,9 @@ async function handleReplyCommand(ctx: Context, command: Command): Promise<void>
           action: `执行指令：${command.name}`,
           details: `用户已被永久封禁`,
           userName: `@${ctx.from.username || ctx.from.first_name}`,
+          groupId: groupId,
           groupTitle: chatTitle,
+          targetUserName: targetUserName,
           status: "success",
         });
       }
@@ -259,7 +275,9 @@ async function handleReplyCommand(ctx: Context, command: Command): Promise<void>
         action: `执行指令：${command.name}`,
         details: `消息已删除`,
         userName: `@${ctx.from.username || ctx.from.first_name}`,
+        groupId: groupId,
         groupTitle: chatTitle,
+        targetUserName: targetUserName,
         status: "success",
       });
       break;
@@ -283,7 +301,9 @@ async function handleDirectCommand(ctx: Context, command: Command): Promise<void
         action: `执行指令：${command.name}`,
         details: `所有置顶消息已取消`,
         userName: `@${ctx.from.username || ctx.from.first_name}`,
+        groupId: String(ctx.chat.id),
         groupTitle: chatTitle,
+        targetUserName: undefined,
         status: "success",
       });
       break;
@@ -305,7 +325,9 @@ async function handleDirectCommand(ctx: Context, command: Command): Promise<void
         action: `执行指令：${command.name}`,
         details: `创建邀请链接，限制${memberLimit}人，有效期${expireMinutes}分钟`,
         userName: `@${ctx.from.username || ctx.from.first_name}`,
+        groupId: String(ctx.chat.id),
         groupTitle: chatTitle,
+        targetUserName: undefined,
         status: "success",
       });
       break;
@@ -320,7 +342,9 @@ async function handleDirectCommand(ctx: Context, command: Command): Promise<void
           action: `执行指令：${command.name}`,
           details: `群组名称已修改为 "${newName}"`,
           userName: `@${ctx.from.username || ctx.from.first_name}`,
+          groupId: String(ctx.chat.id),
           groupTitle: chatTitle,
+          targetUserName: undefined,
           status: "success",
         });
       }
@@ -336,7 +360,9 @@ async function handleDirectCommand(ctx: Context, command: Command): Promise<void
           action: `执行指令：${command.name}`,
           details: `群组简介已修改`,
           userName: `@${ctx.from.username || ctx.from.first_name}`,
+          groupId: String(ctx.chat.id),
           groupTitle: chatTitle,
+          targetUserName: undefined,
           status: "success",
         });
       }
@@ -348,7 +374,9 @@ async function handleDirectCommand(ctx: Context, command: Command): Promise<void
         action: `执行指令：${command.name}`,
         details: `群组简介已删除`,
         userName: `@${ctx.from.username || ctx.from.first_name}`,
+        groupId: String(ctx.chat.id),
         groupTitle: chatTitle,
+        targetUserName: undefined,
         status: "success",
       });
       break;
