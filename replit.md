@@ -51,6 +51,8 @@ Preferred communication style: Simple, everyday language.
     -   **Direct Commands:** Unpin all messages, create invite links, set group name/description
     -   **Reply Commands:** Pin/unpin messages, set/remove user titles, mute/kick/ban users, delete messages
     -   **Scrollable list:** Fixed 500px height container with overflow scrolling for many commands
+    -   **Dynamic action filtering:** Action type dropdown dynamically filters based on selected trigger type, showing only compatible actions
+    -   **Automatic selection:** When creating new commands or changing trigger type, the first compatible action is automatically selected to maintain form validity
 -   **Activity Logging:** 
     -   **Two-tier log system:** System logs (bot token changes, system events) and group logs (command executions per group)
     -   **System logs:** Preserved permanently, never auto-deleted when groups are cleared; includes "🔄 刷新群组信息" actions
