@@ -1,6 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { storage } from "./storage";
 
 const app = express();
 
@@ -78,4 +79,40 @@ app.use((req, res, next) => {
   }, () => {
     log(`serving on port ${port}`);
   });
+
+  // 定时清理10天前的日志（每天凌晨3点执行）
+  const scheduleLogCleanup = () => {
+    const now = new Date();
+    const next3AM = new Date(now);
+    next3AM.setHours(3, 0, 0, 0);
+    
+    if (now > next3AM) {
+      next3AM.setDate(next3AM.getDate() + 1);
+    }
+    
+    const msUntil3AM = next3AM.getTime() - now.getTime();
+    
+    setTimeout(async () => {
+      try {
+        const deletedCount = await storage.cleanOldLogs(10);
+        log(`🗑️  自动清理完成：删除了 ${deletedCount} 条10天前的日志`);
+      } catch (error) {
+        console.error("日志清理失败:", error);
+      }
+      
+      // 安排下一次执行（24小时后）
+      setInterval(async () => {
+        try {
+          const deletedCount = await storage.cleanOldLogs(10);
+          log(`🗑️  自动清理完成：删除了 ${deletedCount} 条10天前的日志`);
+        } catch (error) {
+          console.error("日志清理失败:", error);
+        }
+      }, 24 * 60 * 60 * 1000);
+    }, msUntil3AM);
+    
+    log(`⏰ 日志自动清理任务已设置：下次执行时间 ${next3AM.toLocaleString('zh-CN')}`);
+  };
+  
+  scheduleLogCleanup();
 })();

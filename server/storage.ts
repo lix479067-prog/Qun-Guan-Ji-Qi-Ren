@@ -48,6 +48,7 @@ export interface IStorage {
   // Activity log operations
   getRecentLogs(limit?: number): Promise<ActivityLog[]>;
   createLog(log: InsertActivityLog): Promise<ActivityLog>;
+  cleanOldLogs(daysToKeep?: number): Promise<number>;
 
   // Statistics
   getStats(): Promise<{
@@ -175,6 +176,18 @@ export class DatabaseStorage implements IStorage {
   async createLog(log: InsertActivityLog): Promise<ActivityLog> {
     const [created] = await db.insert(activityLogs).values(log).returning();
     return created;
+  }
+
+  async cleanOldLogs(daysToKeep: number = 10): Promise<number> {
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - daysToKeep);
+    
+    const deleted = await db
+      .delete(activityLogs)
+      .where(sql`${activityLogs.timestamp} < ${cutoffDate}`)
+      .returning();
+    
+    return deleted.length;
   }
 
   // Statistics
