@@ -282,8 +282,6 @@ async function handleReplyCommand(ctx: Context, command: Command): Promise<void>
       });
       break;
   }
-
-  await storage.incrementCommandUsage(command.id);
 }
 
 async function handleDirectCommand(ctx: Context, command: Command): Promise<void> {
@@ -381,8 +379,6 @@ async function handleDirectCommand(ctx: Context, command: Command): Promise<void
       });
       break;
   }
-
-  await storage.incrementCommandUsage(command.id);
 }
 
 export async function stopBot(): Promise<void> {

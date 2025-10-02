@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import AddCommandModal from "./AddCommandModal";
-import { Plus, Terminal, Edit, Trash2, Clock } from "lucide-react";
+import { Plus, Terminal, Edit, Trash2 } from "lucide-react";
 import type { Command } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -114,12 +114,6 @@ export default function CommandConfig() {
                     <p className="text-sm text-foreground mt-2" data-testid={`text-command-${command.id}-description`}>
                       {command.description}
                     </p>
-                    <div className="flex items-center gap-4 mt-2">
-                      <span className="text-xs text-muted-foreground flex items-center gap-1">
-                        <Clock className="w-3 h-3" />
-                        使用 {command.usageCount} 次
-                      </span>
-                    </div>
                   </div>
                   <div className="flex gap-2">
                     <button

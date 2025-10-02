@@ -10,7 +10,6 @@ import { Users, Terminal, CheckCircle, TrendingUp } from "lucide-react";
 export default function Dashboard() {
   const { data: stats } = useQuery<{
     activeGroups: number;
-    commandsExecuted: number;
     configuredCommands: number;
   }>({
     queryKey: ["/api/stats"],
@@ -51,19 +50,12 @@ export default function Dashboard() {
         {/* Dashboard Content */}
         <div className="p-8 space-y-8">
           {/* Stats Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <StatsCard
               title="活跃群组"
               value={stats?.activeGroups || 0}
               change="+3 本周"
               icon={<Users className="w-6 h-6" />}
-              trend="up"
-            />
-            <StatsCard
-              title="执行指令"
-              value={stats?.commandsExecuted || 0}
-              change="+156 今日"
-              icon={<CheckCircle className="w-6 h-6" />}
               trend="up"
             />
             <StatsCard
