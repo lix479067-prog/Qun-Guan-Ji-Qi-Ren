@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import AddGroupModal from "./AddGroupModal";
-import { Plus, Users, RefreshCw } from "lucide-react";
+import { Plus, Users, RefreshCw, Search } from "lucide-react";
 import type { GroupWhitelist } from "@shared/schema";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -11,11 +12,24 @@ import { Trash2 } from "lucide-react";
 
 export default function GroupWhitelist() {
   const [showAddModal, setShowAddModal] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const { toast } = useToast();
 
   const { data: groups = [] } = useQuery<GroupWhitelist[]>({
     queryKey: ["/api/groups"],
   });
+
+  // 过滤群组：按群组ID或群组名称搜索
+  const filteredGroups = useMemo(() => {
+    if (!searchQuery.trim()) {
+      return groups;
+    }
+    const query = searchQuery.toLowerCase().trim();
+    return groups.filter(group => 
+      group.groupId.toLowerCase().includes(query) ||
+      (group.groupTitle && group.groupTitle.toLowerCase().includes(query))
+    );
+  }, [groups, searchQuery]);
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
@@ -62,7 +76,7 @@ export default function GroupWhitelist() {
     <>
       <div className="bg-card border border-border rounded-lg flex flex-col">
         <div className="p-6 border-b border-border">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="text-lg font-semibold text-foreground">群组白名单</h3>
               <p className="text-sm text-muted-foreground mt-1">授权机器人工作的群组</p>
@@ -72,16 +86,35 @@ export default function GroupWhitelist() {
               添加群组
             </Button>
           </div>
+          
+          {/* 搜索框 */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              type="text"
+              placeholder="搜索群组ID或名称..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9"
+              data-testid="input-search-group"
+            />
+          </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto max-h-96">
+        <div className="flex-1 overflow-y-auto h-[500px]">
           {groups.length === 0 ? (
             <div className="p-8 text-center text-muted-foreground">
               <Users className="w-12 h-12 mx-auto mb-2 opacity-50" />
               <p>暂无授权群组</p>
             </div>
+          ) : filteredGroups.length === 0 ? (
+            <div className="p-8 text-center text-muted-foreground">
+              <Search className="w-12 h-12 mx-auto mb-2 opacity-50" />
+              <p>未找到匹配的群组</p>
+              <p className="text-xs mt-1">尝试搜索群组ID或名称</p>
+            </div>
           ) : (
-            groups.map((group) => (
+            filteredGroups.map((group) => (
               <div
                 key={group.id}
                 className="p-4 border-b border-border hover:bg-muted/50 transition-colors"
@@ -140,7 +173,15 @@ export default function GroupWhitelist() {
 
         <div className="p-4 border-t border-border bg-muted/30">
           <p className="text-xs text-muted-foreground text-center">
-            共 <span className="font-semibold text-foreground">{groups.length}</span> 个授权群组
+            {searchQuery.trim() ? (
+              <>
+                找到 <span className="font-semibold text-foreground">{filteredGroups.length}</span> 个匹配群组 / 共 <span className="font-semibold text-foreground">{groups.length}</span> 个
+              </>
+            ) : (
+              <>
+                共 <span className="font-semibold text-foreground">{groups.length}</span> 个授权群组
+              </>
+            )}
           </p>
         </div>
       </div>

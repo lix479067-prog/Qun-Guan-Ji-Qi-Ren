@@ -73,7 +73,7 @@ export default function CommandConfig() {
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto max-h-96">
+        <div className="flex-1 overflow-y-auto h-[500px]">
           {commands.length === 0 ? (
             <div className="p-8 text-center text-muted-foreground">
               <Terminal className="w-12 h-12 mx-auto mb-2 opacity-50" />
