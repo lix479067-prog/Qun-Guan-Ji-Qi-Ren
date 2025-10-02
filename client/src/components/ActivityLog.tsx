@@ -135,18 +135,18 @@ export default function ActivityLogs() {
             <div className="flex items-center gap-2">
               <Server className="w-4 h-4 text-muted-foreground" />
               <span className="text-sm font-medium text-foreground">📋 系统日志</span>
-              <span className="text-xs text-muted-foreground">({systemLogs.length}条记录)</span>
+              <span className="text-xs text-muted-foreground">({systemLogs.length}条)</span>
             </div>
           </div>
 
-          <div className="divide-y divide-border/50">
+          <div className="divide-y divide-border/50 max-h-[200px] overflow-y-auto">
             {systemLogs.length === 0 ? (
-              <div className="p-6 text-center text-muted-foreground">
-                <FileText className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                <p className="text-sm">暂无系统日志</p>
+              <div className="p-4 text-center text-muted-foreground">
+                <FileText className="w-6 h-6 mx-auto mb-1 opacity-50" />
+                <p className="text-xs">暂无系统日志</p>
               </div>
             ) : (
-              systemLogs.map((log) => (
+              systemLogs.slice(0, 5).map((log) => (
                 <div
                   key={log.id}
                   className="p-3 hover:bg-muted/30 transition-colors"
@@ -234,11 +234,11 @@ export default function ActivityLogs() {
                 </div>
 
                 {/* 群组日志列表 */}
-                <div className="divide-y divide-border/50">
+                <div className="divide-y divide-border/50 max-h-[300px] overflow-y-auto">
                   {groupLogs.length === 0 ? (
-                    <div className="p-6 text-center text-muted-foreground">
-                      <FileText className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                      <p className="text-sm">该群组暂无操作记录</p>
+                    <div className="p-4 text-center text-muted-foreground">
+                      <FileText className="w-6 h-6 mx-auto mb-1 opacity-50" />
+                      <p className="text-xs">该群组暂无操作记录</p>
                     </div>
                   ) : (
                     groupLogs.map((log) => (
