@@ -70,7 +70,7 @@ export default function AddGroupModal({ isOpen, onClose }: AddGroupModalProps) {
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="groupId">群组 ID *</Label>
+            <Label htmlFor="groupId">群组 ID</Label>
             <Input
               id="groupId"
               data-testid="input-group-id"
@@ -84,27 +84,6 @@ export default function AddGroupModal({ isOpen, onClose }: AddGroupModalProps) {
             <p className="text-xs text-muted-foreground">
               将机器人添加到群组后，使用 /id 命令获取群组 ID
             </p>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="groupTitle">群组名称（可选）</Label>
-            <Input
-              id="groupTitle"
-              data-testid="input-group-title"
-              placeholder="输入群组名称"
-              {...register("groupTitle")}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="memberCount">成员数量（可选）</Label>
-            <Input
-              id="memberCount"
-              data-testid="input-member-count"
-              type="number"
-              placeholder="1000"
-              {...register("memberCount", { valueAsNumber: true })}
-            />
           </div>
 
           <div className="flex gap-3 justify-end pt-4">

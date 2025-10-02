@@ -50,10 +50,15 @@ export const groupWhitelist = pgTable("group_whitelist", {
   addedAt: timestamp("added_at").defaultNow().notNull(),
 });
 
-export const insertGroupWhitelistSchema = createInsertSchema(groupWhitelist).omit({
-  id: true,
-  addedAt: true,
-});
+export const insertGroupWhitelistSchema = createInsertSchema(groupWhitelist)
+  .omit({
+    id: true,
+    addedAt: true,
+  })
+  .extend({
+    groupTitle: z.string().optional(),
+    memberCount: z.number().optional(),
+  });
 
 export type InsertGroupWhitelist = z.infer<typeof insertGroupWhitelistSchema>;
 export type GroupWhitelist = typeof groupWhitelist.$inferSelect;

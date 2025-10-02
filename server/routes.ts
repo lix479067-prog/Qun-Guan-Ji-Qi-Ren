@@ -181,6 +181,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/groups/:id/refresh", isAuthenticated, async (req, res) => {
+    try {
+      const group = await storage.getGroupById(req.params.id);
+      if (!group) {
+        return res.status(404).json({ message: "群组不存在" });
+      }
+
+      const bot = getBotInstance();
+      if (!bot) {
+        return res.status(503).json({ message: "机器人未运行" });
+      }
+
+      // 通过 Telegram API 获取群组最新信息
+      const chat = await bot.telegram.getChat(group.groupId);
+      
+      // 获取群组成员数
+      let memberCount: number | undefined;
+      try {
+        memberCount = await bot.telegram.getChatMembersCount(group.groupId);
+      } catch (error) {
+        console.log("无法获取成员数量:", error);
+      }
+
+      // 提取群组标题（只有 group/supergroup/channel 有 title）
+      const groupTitle = 'title' in chat ? chat.title : group.groupTitle;
+
+      // 更新数据库
+      const updatedGroup = await storage.updateGroup(req.params.id, {
+        groupTitle: groupTitle || undefined,
+        memberCount: memberCount,
+      });
+
+      await storage.createLog({
+        action: "刷新群组信息",
+        details: `群组 ${updatedGroup.groupTitle || updatedGroup.groupId} 信息已更新`,
+        status: "success",
+        groupId: updatedGroup.groupId,
+        groupTitle: updatedGroup.groupTitle || undefined,
+      });
+
+      res.json(updatedGroup);
+    } catch (error: any) {
+      console.error("Refresh group error:", error);
+      
+      await storage.createLog({
+        action: "刷新群组信息",
+        details: `刷新失败: ${error.message}`,
+        status: "error",
+      });
+      
+      res.status(500).json({ message: error.message || "刷新群组信息失败" });
+    }
+  });
+
   // Command routes
   app.get("/api/commands", isAuthenticated, async (req, res) => {
     try {

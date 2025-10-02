@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import AddGroupModal from "./AddGroupModal";
-import { Plus, Users } from "lucide-react";
+import { Plus, Users, RefreshCw } from "lucide-react";
 import type { GroupWhitelist } from "@shared/schema";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -31,6 +31,27 @@ export default function GroupWhitelist() {
     onError: (error: Error) => {
       toast({
         title: "删除失败",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const refreshMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await apiRequest("POST", `/api/groups/${id}/refresh`);
+      return await res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/groups"] });
+      toast({
+        title: "刷新成功",
+        description: "群组信息已更新",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "刷新失败",
         description: error.message,
         variant: "destructive",
       });
@@ -93,13 +114,24 @@ export default function GroupWhitelist() {
                       <span>添加于 {new Date(group.addedAt).toLocaleDateString("zh-CN")}</span>
                     </div>
                   </div>
-                  <button
-                    onClick={() => deleteMutation.mutate(group.id)}
-                    className="p-2 text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
-                    data-testid={`button-delete-group-${group.id}`}
-                  >
-                    <Trash2 className="w-5 h-5" />
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => refreshMutation.mutate(group.id)}
+                      disabled={refreshMutation.isPending}
+                      className="p-2 text-primary hover:bg-primary/10 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      data-testid={`button-refresh-group-${group.id}`}
+                      title="刷新群组信息"
+                    >
+                      <RefreshCw className={`w-5 h-5 ${refreshMutation.isPending ? 'animate-spin' : ''}`} />
+                    </button>
+                    <button
+                      onClick={() => deleteMutation.mutate(group.id)}
+                      className="p-2 text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
+                      data-testid={`button-delete-group-${group.id}`}
+                    >
+                      <Trash2 className="w-5 h-5" />
+                    </button>
+                  </div>
                 </div>
               </div>
             ))
