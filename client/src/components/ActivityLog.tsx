@@ -141,15 +141,19 @@ export default function ActivityLogs() {
       <div className="flex h-[600px]">
         {/* 左侧：系统日志（30%） */}
         <div className="w-[30%] border-r border-border flex flex-col">
-          <div className="bg-muted/30 px-4 py-3 border-b border-border flex-shrink-0">
-            <div className="flex items-center gap-2">
+          {/* 顶部标题区域 */}
+          <div className="bg-muted/30 px-4 border-b border-border flex-shrink-0">
+            <div className="flex items-center gap-2 h-[42px]">
               <Server className="w-4 h-4 text-muted-foreground" />
               <span className="text-sm font-medium text-foreground">📋 系统日志</span>
               <span className="text-xs text-muted-foreground">({systemLogs.length})</span>
             </div>
           </div>
+          
+          {/* 占位区域，匹配右侧导出按钮高度 */}
+          <div className="h-[41px] border-b border-border bg-muted/10 flex-shrink-0"></div>
 
-          <div className="overflow-y-auto divide-y divide-border/50" style={{ height: 'calc(600px - 49px)' }}>
+          <div className="flex-1 overflow-y-auto divide-y divide-border/50">
             {systemLogs.length === 0 ? (
               <div className="p-6 text-center text-muted-foreground">
                 <FileText className="w-8 h-8 mx-auto mb-2 opacity-50" />
