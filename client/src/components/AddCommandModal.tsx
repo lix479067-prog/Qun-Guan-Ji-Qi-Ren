@@ -29,6 +29,7 @@ interface AddCommandModalProps {
   isOpen: boolean;
   onClose: () => void;
   editingCommand?: Command | null;
+  existingCommands?: Command[];
 }
 
 // 定义操作类型和触发方式的映射关系
@@ -54,7 +55,7 @@ const actionTypesByTrigger = {
   ],
 } as const;
 
-export default function AddCommandModal({ isOpen, onClose, editingCommand }: AddCommandModalProps) {
+export default function AddCommandModal({ isOpen, onClose, editingCommand, existingCommands = [] }: AddCommandModalProps) {
   const { toast } = useToast();
 
   const {
@@ -81,14 +82,23 @@ export default function AddCommandModal({ isOpen, onClose, editingCommand }: Add
       setValue("description", editingCommand.description || "");
       setValue("isEnabled", editingCommand.isEnabled);
     } else {
-      // 新建指令时，设置默认值并自动选择第一个操作类型
+      // 新建指令时，设置默认值并自动选择第一个可用的操作类型
       reset({ isEnabled: true, triggerType: 'reply' });
-      const firstReplyAction = actionTypesByTrigger.reply?.[0]?.value;
+      
+      // 获取reply触发方式下还未使用的操作类型
+      const usedReplyActions = existingCommands
+        .filter(cmd => cmd.triggerType === 'reply')
+        .map(cmd => cmd.actionType);
+      const availableReplyActions = actionTypesByTrigger.reply.filter(
+        action => !usedReplyActions.includes(action.value)
+      );
+      const firstReplyAction = availableReplyActions?.[0]?.value;
+      
       if (firstReplyAction) {
         setValue("actionType", firstReplyAction);
       }
     }
-  }, [isOpen, editingCommand, setValue, reset]);
+  }, [isOpen, editingCommand, setValue, reset, existingCommands]);
 
   const createMutation = useMutation({
     mutationFn: async (data: InsertCommand) => {
@@ -146,9 +156,24 @@ export default function AddCommandModal({ isOpen, onClose, editingCommand }: Add
   const triggerType = watch("triggerType");
 
   // 获取当前触发方式对应的操作类型列表
-  const availableActionTypes = triggerType 
-    ? actionTypesByTrigger[triggerType as keyof typeof actionTypesByTrigger] || []
-    : [];
+  // 在新建模式下，过滤掉已经使用的操作类型；编辑模式下显示所有操作类型
+  const availableActionTypes = (() => {
+    if (!triggerType) return [];
+    
+    const allActions = actionTypesByTrigger[triggerType as keyof typeof actionTypesByTrigger] || [];
+    
+    // 编辑模式：显示所有操作类型
+    if (editingCommand) {
+      return allActions;
+    }
+    
+    // 新建模式：过滤掉已使用的操作类型
+    const usedActions = existingCommands
+      .filter(cmd => cmd.triggerType === triggerType)
+      .map(cmd => cmd.actionType);
+    
+    return allActions.filter(action => !usedActions.includes(action.value));
+  })();
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -178,7 +203,18 @@ export default function AddCommandModal({ isOpen, onClose, editingCommand }: Add
                 setValue("triggerType", value);
                 // 当触发方式改变时，自动选择第一个可用的操作类型
                 const newTriggerType = value as keyof typeof actionTypesByTrigger;
-                const firstAction = actionTypesByTrigger[newTriggerType]?.[0]?.value;
+                const allActions = [...(actionTypesByTrigger[newTriggerType] || [])];
+                
+                // 在新建模式下，过滤掉已使用的操作类型
+                let availableActions = allActions;
+                if (!editingCommand) {
+                  const usedActions = existingCommands
+                    .filter(cmd => cmd.triggerType === value)
+                    .map(cmd => cmd.actionType);
+                  availableActions = allActions.filter(action => !usedActions.includes(action.value));
+                }
+                
+                const firstAction = availableActions?.[0]?.value;
                 if (firstAction) {
                   setValue("actionType", firstAction);
                 }

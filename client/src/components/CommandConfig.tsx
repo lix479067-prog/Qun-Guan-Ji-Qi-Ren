@@ -154,6 +154,7 @@ export default function CommandConfig() {
           setEditingCommand(null);
         }}
         editingCommand={editingCommand}
+        existingCommands={commands}
       />
     </>
   );

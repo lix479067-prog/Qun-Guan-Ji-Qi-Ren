@@ -52,7 +52,8 @@ Preferred communication style: Simple, everyday language.
     -   **Reply Commands:** Pin/unpin messages, set/remove user titles, mute/unmute users, kick/ban users, delete messages
     -   **Scrollable list:** Fixed 500px height container with overflow scrolling for many commands
     -   **Dynamic action filtering:** Action type dropdown dynamically filters based on selected trigger type, showing only compatible actions
-    -   **Automatic selection:** When creating new commands or changing trigger type, the first compatible action is automatically selected to maintain form validity
+    -   **Smart command filtering:** When creating new commands, the system automatically hides trigger-action combinations that already exist, showing only available command options to prevent duplicates
+    -   **Automatic selection:** When creating new commands or changing trigger type, the first available (non-duplicate) action is automatically selected to maintain form validity
     -   **Invite Link Creation:** Supports flexible parameters - default (30 people, 60 minutes), space-separated (`/invite 10 5`), or slash-separated (`/invite 10/5`) format; automatically adds creator name annotation to links
     -   **Unmute Functionality:** Restores normal member permissions (messaging, media, polls); reply method is most reliable; direct method works with text_mention entities via user avatar selection
 -   **Activity Logging:** 
