@@ -220,8 +220,9 @@ export default function AddCommandModal({ isOpen, onClose, editingCommand, exist
                   setValue("actionType", firstAction);
                 }
               }}
+              disabled={!!editingCommand}
             >
-              <SelectTrigger data-testid="select-trigger-type">
+              <SelectTrigger data-testid="select-trigger-type" disabled={!!editingCommand}>
                 <SelectValue placeholder="选择触发方式" />
               </SelectTrigger>
               <SelectContent>
@@ -239,8 +240,9 @@ export default function AddCommandModal({ isOpen, onClose, editingCommand, exist
             <Select
               value={watch("actionType")}
               onValueChange={(value) => setValue("actionType", value)}
+              disabled={!!editingCommand}
             >
-              <SelectTrigger data-testid="select-action-type">
+              <SelectTrigger data-testid="select-action-type" disabled={!!editingCommand}>
                 <SelectValue placeholder="选择操作类型" />
               </SelectTrigger>
               <SelectContent>
