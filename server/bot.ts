@@ -167,16 +167,18 @@ export async function startBot(token: string): Promise<void> {
       let matchingCommand: Command | undefined;
       
       if (hasReply) {
+        // 精准匹配：消息必须以指令名开头
         matchingCommand = allCommands.find(
-          (cmd) => cmd.isEnabled && cmd.triggerType === 'reply' && messageText.includes(cmd.name)
+          (cmd) => cmd.isEnabled && cmd.triggerType === 'reply' && messageText.startsWith(cmd.name)
         );
         
         if (matchingCommand) {
           await handleReplyCommand(ctx, matchingCommand);
         }
       } else {
+        // 精准匹配：消息必须以指令名开头
         matchingCommand = allCommands.find(
-          (cmd) => cmd.isEnabled && cmd.triggerType === 'direct' && messageText.includes(cmd.name)
+          (cmd) => cmd.isEnabled && cmd.triggerType === 'direct' && messageText.startsWith(cmd.name)
         );
         
         if (matchingCommand) {
