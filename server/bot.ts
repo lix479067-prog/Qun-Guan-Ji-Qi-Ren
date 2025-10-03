@@ -104,12 +104,11 @@ export async function startBot(token: string): Promise<void> {
             : inviteLink.creator.first_name;
         }
 
-        // 发送通知消息（10秒后自动删除）
-        await sendAndDeleteMessage(
+        // 发送通知消息
+        await bot!.telegram.sendMessage(
           chatId,
           `🎉 欢迎新成员！\n\n` +
-          `👤 ${newMemberName} 通过 ${creatorInfo} 的邀请链接加入了群组`,
-          10
+          `👤 ${newMemberName} 通过 ${creatorInfo} 的邀请链接加入了群组`
         );
 
         // 记录日志
@@ -266,13 +265,7 @@ async function handleReplyCommand(ctx: Context, command: Command): Promise<void>
       try {
         // 执行取消置顶操作
         await ctx.unpinChatMessage(replyToMessageId);
-        
-        // 发送反馈消息（5秒后自动删除）
-        await sendAndDeleteMessage(
-          ctx.chat.id,
-          "✅ 消息已取消置顶",
-          5
-        );
+        await ctx.reply("✅ 消息已取消置顶");
         
         // 记录日志（异步，不阻塞）
         storage.createLog({
@@ -285,12 +278,7 @@ async function handleReplyCommand(ctx: Context, command: Command): Promise<void>
           status: "success",
         }).catch(err => console.error("Log error:", err));
       } catch (error: any) {
-        // 错误消息（5秒后自动删除）
-        await sendAndDeleteMessage(
-          ctx.chat.id,
-          `❌ 取消置顶失败: ${error.message}`,
-          5
-        );
+        await ctx.reply(`❌ 取消置顶失败: ${error.message}`);
         storage.createLog({
           action: command.name,
           details: `📌 取消置顶失败 | 错误: ${error.message}`,
@@ -465,13 +453,7 @@ async function handleDirectCommand(ctx: Context, command: Command): Promise<void
       try {
         // 执行取消所有置顶操作
         await ctx.unpinAllChatMessages();
-        
-        // 发送反馈消息（5秒后自动删除）
-        await sendAndDeleteMessage(
-          ctx.chat.id,
-          "✅ 已取消群组所有置顶消息",
-          5
-        );
+        await ctx.reply("✅ 已取消群组所有置顶消息");
         
         // 异步记录日志，不阻塞
         storage.createLog({
@@ -484,12 +466,7 @@ async function handleDirectCommand(ctx: Context, command: Command): Promise<void
           status: "success",
         }).catch(err => console.error("Log error:", err));
       } catch (error: any) {
-        // 错误消息（5秒后自动删除）
-        await sendAndDeleteMessage(
-          ctx.chat.id,
-          `❌ 取消所有置顶失败: ${error.message}`,
-          5
-        );
+        await ctx.reply(`❌ 取消所有置顶失败: ${error.message}`);
         storage.createLog({
           action: command.name,
           details: `📌 取消所有置顶失败 | 错误: ${error.message}`,
@@ -507,14 +484,12 @@ async function handleDirectCommand(ctx: Context, command: Command): Promise<void
       const linkMatch = messageText.match(/(\d+)\s+(\d+)/);
       
       if (!linkMatch) {
-        // 没有提供参数，提示用户正确格式（5秒后自动删除）
-        await sendAndDeleteMessage(
-          ctx.chat.id,
+        // 没有提供参数，提示用户正确格式
+        await ctx.reply(
           `❌ 请提供人数和时间参数\n\n` +
           `格式：${command.name} 人数 时长(分钟)\n` +
           `示例：${command.name} 10 5\n` +
-          `（创建10人5分钟有效的邀请链接）`,
-          5
+          `（创建10人5分钟有效的邀请链接）`
         );
         return;
       }
@@ -564,25 +539,17 @@ async function handleDirectCommand(ctx: Context, command: Command): Promise<void
       const newName = nameMatch ? nameMatch[1].trim() : "";
       
       if (!newName) {
-        // 错误提示消息（5秒后自动删除）
-        await sendAndDeleteMessage(
-          ctx.chat.id,
+        await ctx.reply(
           `❌ 请提供群组名称\n\n` +
           `格式：${command.name} 新群名\n` +
-          `示例：${command.name} 我的超级群组`,
-          5
+          `示例：${command.name} 我的超级群组`
         );
         return;
       }
       
       try {
         await ctx.setChatTitle(newName);
-        // 成功反馈（5秒后自动删除）
-        await sendAndDeleteMessage(
-          ctx.chat.id,
-          `✅ 群组名称已修改为 "${newName}"`,
-          5
-        );
+        await ctx.reply(`✅ 群组名称已修改为 "${newName}"`);
         storage.createLog({
           action: command.name,
           details: `✏️ 修改群组名称 | 新名称: "${newName}"`,
@@ -593,12 +560,7 @@ async function handleDirectCommand(ctx: Context, command: Command): Promise<void
           status: "success",
         }).catch(err => console.error("Log error:", err));
       } catch (error: any) {
-        // 错误消息（5秒后自动删除）
-        await sendAndDeleteMessage(
-          ctx.chat.id,
-          `❌ 修改群组名称失败: ${error.message}`,
-          5
-        );
+        await ctx.reply(`❌ 修改群组名称失败: ${error.message}`);
       }
       break;
 
@@ -609,25 +571,17 @@ async function handleDirectCommand(ctx: Context, command: Command): Promise<void
       const newDesc = descMatch ? descMatch[1].trim() : "";
       
       if (!newDesc) {
-        // 错误提示消息（5秒后自动删除）
-        await sendAndDeleteMessage(
-          ctx.chat.id,
+        await ctx.reply(
           `❌ 请提供群组简介内容\n\n` +
           `格式：${command.name} 简介内容\n` +
-          `示例：${command.name} 这是一个技术交流群`,
-          5
+          `示例：${command.name} 这是一个技术交流群`
         );
         return;
       }
       
       try {
         await ctx.setChatDescription(newDesc);
-        // 成功反馈（5秒后自动删除）
-        await sendAndDeleteMessage(
-          ctx.chat.id,
-          `✅ 群组简介已设置\n\n${newDesc}`,
-          5
-        );
+        await ctx.reply(`✅ 群组简介已设置\n\n${newDesc}`);
         storage.createLog({
           action: command.name,
           details: `📝 修改群组简介 | 简介内容: "${newDesc.substring(0, 50)}${newDesc.length > 50 ? '...' : ''}"`,
@@ -638,12 +592,7 @@ async function handleDirectCommand(ctx: Context, command: Command): Promise<void
           status: "success",
         }).catch(err => console.error("Log error:", err));
       } catch (error: any) {
-        // 错误消息（5秒后自动删除）
-        await sendAndDeleteMessage(
-          ctx.chat.id,
-          `❌ 设置群组简介失败: ${error.message}`,
-          5
-        );
+        await ctx.reply(`❌ 设置群组简介失败: ${error.message}`);
       }
       break;
 
@@ -651,12 +600,7 @@ async function handleDirectCommand(ctx: Context, command: Command): Promise<void
       try {
         // Telegram API 不能设置完全为空，需要设置一个空格或特殊字符
         await ctx.setChatDescription(" ");
-        // 成功反馈（5秒后自动删除）
-        await sendAndDeleteMessage(
-          ctx.chat.id,
-          "✅ 群组简介已删除",
-          5
-        );
+        await ctx.reply("✅ 群组简介已删除");
         storage.createLog({
           action: command.name,
           details: `📝 删除群组简介 | 已清空群组简介内容`,
@@ -667,12 +611,7 @@ async function handleDirectCommand(ctx: Context, command: Command): Promise<void
           status: "success",
         }).catch(err => console.error("Log error:", err));
       } catch (error: any) {
-        // 错误消息（5秒后自动删除）
-        await sendAndDeleteMessage(
-          ctx.chat.id,
-          `❌ 删除群组简介失败: ${error.message}`,
-          5
-        );
+        await ctx.reply(`❌ 删除群组简介失败: ${error.message}`);
       }
       break;
 
@@ -713,15 +652,13 @@ async function handleDirectCommand(ctx: Context, command: Command): Promise<void
                 targetUnmuteUserId = chat.id;
               }
             } catch (error) {
-              // 如果获取失败，提示使用回复方式（5秒后自动删除）
-              await sendAndDeleteMessage(
-                ctx.chat.id,
+              // 如果获取失败，提示使用回复方式
+              await ctx.reply(
                 `❌ 无法通过 @${username} 找到用户\n\n` +
                 `💡 建议使用回复方式：\n` +
                 `1. 找到该用户的任意一条消息\n` +
                 `2. 回复该消息\n` +
-                `3. 输入解除禁言指令`,
-                5
+                `3. 输入解除禁言指令`
               );
               break;
             }
@@ -752,12 +689,7 @@ async function handleDirectCommand(ctx: Context, command: Command): Promise<void
           until_date: currentTime + 30,
         });
 
-        // 成功反馈（5秒后自动删除）
-        await sendAndDeleteMessage(
-          ctx.chat.id,
-          `✅ 已解除 ${targetUnmuteUsername} 的禁言`,
-          5
-        );
+        await ctx.reply(`✅ 已解除 ${targetUnmuteUsername} 的禁言`);
 
         await storage.createLog({
           action: command.name,
@@ -769,9 +701,7 @@ async function handleDirectCommand(ctx: Context, command: Command): Promise<void
           status: "success",
         });
       } else {
-        // 错误提示消息（5秒后自动删除）
-        await sendAndDeleteMessage(
-          ctx.chat.id,
+        await ctx.reply(
           `❌ 请使用以下方式之一解除禁言：\n\n` +
           `方式1（推荐）：\n` +
           `• 回复被禁言用户的消息\n` +
@@ -779,8 +709,7 @@ async function handleDirectCommand(ctx: Context, command: Command): Promise<void
           `方式2：\n` +
           `• 点击用户头像选择用户\n` +
           `• 在消息中 @ 提及该用户\n` +
-          `• 输入解除禁言指令`,
-          5
+          `• 输入解除禁言指令`
         );
       }
       break;
