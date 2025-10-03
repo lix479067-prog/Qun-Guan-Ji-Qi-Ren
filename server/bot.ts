@@ -516,7 +516,8 @@ async function handleDirectCommand(ctx: Context, command: Command): Promise<void
 
     case "delete_group_description":
       try {
-        await ctx.setChatDescription("");
+        // Telegram API 不能设置完全为空，需要设置一个空格或特殊字符
+        await ctx.setChatDescription(" ");
         await ctx.reply("✅ 群组简介已删除");
         storage.createLog({
           action: command.name,
