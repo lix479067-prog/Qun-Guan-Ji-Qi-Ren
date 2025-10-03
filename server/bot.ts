@@ -170,16 +170,29 @@ async function handleReplyCommand(ctx: Context, command: Command): Promise<void>
       break;
 
     case "unpin_message":
-      await ctx.unpinChatMessage(replyToMessageId);
-      await storage.createLog({
-        action: command.name,
-        details: `📌 取消置顶 | 消息ID: ${replyToMessageId}`,
-        userName: `@${ctx.from.username || ctx.from.first_name}`,
-        groupId: groupId,
-        groupTitle: chatTitle,
-        targetUserName: targetUserName,
-        status: "success",
-      });
+      try {
+        await ctx.unpinChatMessage(replyToMessageId);
+        await storage.createLog({
+          action: command.name,
+          details: `📌 取消置顶 | 消息ID: ${replyToMessageId}`,
+          userName: `@${ctx.from.username || ctx.from.first_name}`,
+          groupId: groupId,
+          groupTitle: chatTitle,
+          targetUserName: targetUserName,
+          status: "success",
+        });
+      } catch (error: any) {
+        await ctx.reply(`❌ 取消置顶失败: ${error.message}`);
+        await storage.createLog({
+          action: command.name,
+          details: `📌 取消置顶失败 | 错误: ${error.message}`,
+          userName: `@${ctx.from.username || ctx.from.first_name}`,
+          groupId: groupId,
+          groupTitle: chatTitle,
+          targetUserName: targetUserName,
+          status: "error",
+        });
+      }
       break;
 
     case "set_title":
