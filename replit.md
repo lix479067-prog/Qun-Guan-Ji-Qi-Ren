@@ -48,7 +48,7 @@ Preferred communication style: Simple, everyday language.
     -   **Refresh groups:** Update group info (title, member count) from Telegram API
 -   **Command Management:** 
     -   Create custom commands with `direct` or `reply` trigger types
-    -   **Direct Commands:** Unpin all messages, create invite links (with flexible parameters), set group name/description, unmute users (via @mention)
+    -   **Direct Commands:** Unpin all messages, create invite links (with flexible parameters), set group name/description, delete group description, unmute users (via @mention)
     -   **Reply Commands:** Pin/unpin messages, set/remove user titles, mute/unmute users, kick/ban users, delete messages
     -   **Scrollable list:** Fixed 500px height container with overflow scrolling for many commands
     -   **Dynamic action filtering:** Action type dropdown dynamically filters based on selected trigger type, showing only compatible actions
@@ -56,6 +56,13 @@ Preferred communication style: Simple, everyday language.
     -   **Automatic selection:** When creating new commands or changing trigger type, the first available (non-duplicate) action is automatically selected to maintain form validity
     -   **Invite Link Creation:** Requires mandatory parameters with space-separated format (`/创建邀请 10 5` for 10 people, 5 minutes); automatically adds creator name annotation to links; shows error message if parameters are missing
     -   **Unmute Functionality:** Restores normal member permissions (messaging, media, polls); reply method is most reliable; direct method works with text_mention entities via user avatar selection
+    -   **Instant Command Feedback:** All operations send immediate status messages before executing, improving perceived responsiveness
+-   **New Member Notifications:**
+    -   Automatic welcome messages when users join via invite links
+    -   Displays who created the invite link (tracked via link name annotation)
+    -   Only works with custom invite links created through the bot
+    -   Notifications sent in group chat with format: "🎉 欢迎新成员！👤 [新成员] 通过 [邀请人] 的邀请链接加入了群组"
+    -   Events logged to activity logs with inviter and new member information
 -   **Activity Logging:** 
     -   **Two-tier log system:** System logs (bot token changes, system events) and group logs (command executions per group)
     -   **System logs:** Preserved permanently, never auto-deleted when groups are cleared; includes "🔄 刷新群组信息" actions
