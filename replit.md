@@ -54,7 +54,7 @@ Preferred communication style: Simple, everyday language.
     -   **Dynamic action filtering:** Action type dropdown dynamically filters based on selected trigger type, showing only compatible actions
     -   **Smart command filtering:** When creating new commands, the system automatically hides trigger-action combinations that already exist, showing only available command options to prevent duplicates
     -   **Automatic selection:** When creating new commands or changing trigger type, the first available (non-duplicate) action is automatically selected to maintain form validity
-    -   **Invite Link Creation:** Supports flexible parameters - default (30 people, 60 minutes), space-separated (`/invite 10 5`), or slash-separated (`/invite 10/5`) format; automatically adds creator name annotation to links
+    -   **Invite Link Creation:** Requires mandatory parameters with space-separated format (`/创建邀请 10 5` for 10 people, 5 minutes); automatically adds creator name annotation to links; shows error message if parameters are missing
     -   **Unmute Functionality:** Restores normal member permissions (messaging, media, polls); reply method is most reliable; direct method works with text_mention entities via user avatar selection
 -   **Activity Logging:** 
     -   **Two-tier log system:** System logs (bot token changes, system events) and group logs (command executions per group)

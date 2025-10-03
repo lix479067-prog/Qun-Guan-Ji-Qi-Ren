@@ -354,10 +354,22 @@ async function handleDirectCommand(ctx: Context, command: Command): Promise<void
       break;
 
     case "create_invite_link":
-      // 支持多种格式：/invite 10 5 或 /invite 10/5 或 /invite（使用默认值）
-      const linkMatch = messageText.match(/(\d+)[\s/]+(\d+)/);
-      const memberLimit = linkMatch ? parseInt(linkMatch[1]) : 30; // 默认30人
-      const expireMinutes = linkMatch ? parseInt(linkMatch[2]) : 60; // 默认60分钟
+      // 只支持空格分隔格式：/创建邀请 10 5（必须提供参数）
+      const linkMatch = messageText.match(/(\d+)\s+(\d+)/);
+      
+      if (!linkMatch) {
+        // 没有提供参数，提示用户正确格式
+        await ctx.reply(
+          `❌ 请提供人数和时间参数\n\n` +
+          `格式：${command.name} 人数 时长(分钟)\n` +
+          `示例：${command.name} 10 5\n` +
+          `（创建10人5分钟有效的邀请链接）`
+        );
+        return;
+      }
+      
+      const memberLimit = parseInt(linkMatch[1]);
+      const expireMinutes = parseInt(linkMatch[2]);
       const expireDate = Math.floor(Date.now() / 1000) + (expireMinutes * 60);
       
       // 创建人备注
