@@ -39,6 +39,7 @@ const actionTypesByTrigger = {
     { value: "set_title", label: "设置用户头衔" },
     { value: "remove_title", label: "删除用户头衔" },
     { value: "mute", label: "禁言用户" },
+    { value: "unmute", label: "解除禁言" },
     { value: "kick", label: "踢出用户" },
     { value: "ban", label: "封禁用户" },
     { value: "delete_message", label: "删除消息" },
@@ -49,6 +50,7 @@ const actionTypesByTrigger = {
     { value: "set_group_name", label: "设置群组名称" },
     { value: "set_group_description", label: "设置群组简介" },
     { value: "delete_group_description", label: "删除群组简介" },
+    { value: "unmute", label: "解除禁言" },
   ],
 } as const;
 
