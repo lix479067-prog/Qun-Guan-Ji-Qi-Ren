@@ -316,22 +316,39 @@ async function handleDirectCommand(ctx: Context, command: Command): Promise<void
       break;
 
     case "create_invite_link":
-      const linkMatch = messageText.match(/邀请\s*(\d+)\s*(\d+)/);
-      const memberLimit = linkMatch ? parseInt(linkMatch[1]) : 100;
-      const expireMinutes = linkMatch ? parseInt(linkMatch[2]) : 60;
+      // 支持多种格式：/invite 10 5 或 /invite 10/5 或 /invite（使用默认值）
+      const linkMatch = messageText.match(/(\d+)[\s/]+(\d+)/);
+      const memberLimit = linkMatch ? parseInt(linkMatch[1]) : 30; // 默认30人
+      const expireMinutes = linkMatch ? parseInt(linkMatch[2]) : 60; // 默认60分钟
       const expireDate = Math.floor(Date.now() / 1000) + (expireMinutes * 60);
+      
+      // 创建人备注
+      const creatorName = ctx.from.username || ctx.from.first_name;
+      const linkName = `@${creatorName}创建`;
       
       const inviteLink = await ctx.createChatInviteLink({
         member_limit: memberLimit,
         expire_date: expireDate,
+        name: linkName,
       });
       
-      await ctx.reply(`邀请链接已创建：\n${inviteLink.invite_link}\n人数限制：${memberLimit}\n有效期：${expireMinutes}分钟`);
+      // 格式化有效期显示
+      const expireText = expireMinutes >= 60 
+        ? `${Math.floor(expireMinutes / 60)}小时${expireMinutes % 60 > 0 ? (expireMinutes % 60) + '分钟' : ''}`
+        : `${expireMinutes}分钟`;
+      
+      await ctx.reply(
+        `✅ 邀请链接已创建\n\n` +
+        `🔗 链接：${inviteLink.invite_link}\n` +
+        `👥 人数限制：${memberLimit}人\n` +
+        `⏰ 有效期：${expireText}\n` +
+        `👤 创建人：@${creatorName}`
+      );
       
       await storage.createLog({
         action: command.name,
-        details: `🔗 创建邀请链接 | 人数限制: ${memberLimit}人 | 有效期: ${expireMinutes}分钟`,
-        userName: `@${ctx.from.username || ctx.from.first_name}`,
+        details: `🔗 创建邀请链接 | 人数: ${memberLimit}人 | 有效期: ${expireText} | 创建人: @${creatorName}`,
+        userName: `@${creatorName}`,
         groupId: String(ctx.chat.id),
         groupTitle: chatTitle,
         targetUserName: undefined,
