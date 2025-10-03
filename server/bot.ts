@@ -171,9 +171,17 @@ async function handleReplyCommand(ctx: Context, command: Command): Promise<void>
 
     case "unpin_message":
       try {
+        // 先发送反馈消息，让用户立即看到响应
+        const replyPromise = ctx.reply("✅ 正在取消置顶...");
+        
+        // 执行取消置顶操作（这个可能比较慢）
         await ctx.unpinChatMessage(replyToMessageId);
-        await ctx.reply("✅ 消息已取消置顶");
-        await storage.createLog({
+        
+        // 等待反馈消息发送完成
+        await replyPromise;
+        
+        // 记录日志（异步，不阻塞）
+        storage.createLog({
           action: command.name,
           details: `📌 取消置顶 | 消息ID: ${replyToMessageId}`,
           userName: `@${ctx.from.username || ctx.from.first_name}`,
@@ -181,10 +189,10 @@ async function handleReplyCommand(ctx: Context, command: Command): Promise<void>
           groupTitle: chatTitle,
           targetUserName: targetUserName,
           status: "success",
-        });
+        }).catch(err => console.error("Log error:", err));
       } catch (error: any) {
         await ctx.reply(`❌ 取消置顶失败: ${error.message}`);
-        await storage.createLog({
+        storage.createLog({
           action: command.name,
           details: `📌 取消置顶失败 | 错误: ${error.message}`,
           userName: `@${ctx.from.username || ctx.from.first_name}`,
@@ -192,7 +200,7 @@ async function handleReplyCommand(ctx: Context, command: Command): Promise<void>
           groupTitle: chatTitle,
           targetUserName: targetUserName,
           status: "error",
-        });
+        }).catch(err => console.error("Log error:", err));
       }
       break;
 
@@ -355,17 +363,38 @@ async function handleDirectCommand(ctx: Context, command: Command): Promise<void
 
   switch (command.actionType) {
     case "unpin_all_messages":
-      await ctx.unpinAllChatMessages();
-      await ctx.reply("✅ 已取消群组所有置顶消息");
-      await storage.createLog({
-        action: command.name,
-        details: `📌 取消全部置顶 | 已取消群组所有置顶消息`,
-        userName: `@${ctx.from.username || ctx.from.first_name}`,
-        groupId: String(ctx.chat.id),
-        groupTitle: chatTitle,
-        targetUserName: undefined,
-        status: "success",
-      });
+      try {
+        // 先立即回复，让用户知道操作开始了
+        const replyPromise = ctx.reply("✅ 正在取消所有置顶消息...");
+        
+        // 执行取消所有置顶操作（可能需要较长时间）
+        await ctx.unpinAllChatMessages();
+        
+        // 等待回复发送完成
+        await replyPromise;
+        
+        // 异步记录日志，不阻塞
+        storage.createLog({
+          action: command.name,
+          details: `📌 取消全部置顶 | 已取消群组所有置顶消息`,
+          userName: `@${ctx.from.username || ctx.from.first_name}`,
+          groupId: String(ctx.chat.id),
+          groupTitle: chatTitle,
+          targetUserName: undefined,
+          status: "success",
+        }).catch(err => console.error("Log error:", err));
+      } catch (error: any) {
+        await ctx.reply(`❌ 取消所有置顶失败: ${error.message}`);
+        storage.createLog({
+          action: command.name,
+          details: `📌 取消所有置顶失败 | 错误: ${error.message}`,
+          userName: `@${ctx.from.username || ctx.from.first_name}`,
+          groupId: String(ctx.chat.id),
+          groupTitle: chatTitle,
+          targetUserName: undefined,
+          status: "error",
+        }).catch(err => console.error("Log error:", err));
+      }
       break;
 
     case "create_invite_link":
