@@ -249,12 +249,6 @@ async function handleReplyCommand(ctx: Context, command: Command): Promise<void>
 
     case "unmute":
       if (targetUserId) {
-        console.log("🔊 Processing unmute command...");
-        console.log("Target user ID:", targetUserId);
-        console.log("Target user name:", targetUserName);
-        
-        // 解除禁言：恢复用户的发言权限
-        // 注意：Telegram的限制是至少需要until_date参数
         const currentTime = Math.floor(Date.now() / 1000);
         
         await ctx.restrictChatMember(targetUserId, {
@@ -277,8 +271,6 @@ async function handleReplyCommand(ctx: Context, command: Command): Promise<void>
           until_date: currentTime + 30,
         });
         
-        console.log("✅ Unmute API call completed");
-        
         await ctx.reply("✅ 已解除用户禁言");
         
         await storage.createLog({
@@ -290,8 +282,6 @@ async function handleReplyCommand(ctx: Context, command: Command): Promise<void>
           targetUserName: targetUserName,
           status: "success",
         });
-        
-        console.log("✅ Unmute log created");
       }
       break;
 

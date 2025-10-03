@@ -48,12 +48,13 @@ Preferred communication style: Simple, everyday language.
     -   **Refresh groups:** Update group info (title, member count) from Telegram API
 -   **Command Management:** 
     -   Create custom commands with `direct` or `reply` trigger types
-    -   **Direct Commands:** Unpin all messages, create invite links (with flexible parameters), set group name/description
-    -   **Reply Commands:** Pin/unpin messages, set/remove user titles, mute/kick/ban users, delete messages
+    -   **Direct Commands:** Unpin all messages, create invite links (with flexible parameters), set group name/description, unmute users (via @mention)
+    -   **Reply Commands:** Pin/unpin messages, set/remove user titles, mute/unmute users, kick/ban users, delete messages
     -   **Scrollable list:** Fixed 500px height container with overflow scrolling for many commands
     -   **Dynamic action filtering:** Action type dropdown dynamically filters based on selected trigger type, showing only compatible actions
     -   **Automatic selection:** When creating new commands or changing trigger type, the first compatible action is automatically selected to maintain form validity
     -   **Invite Link Creation:** Supports flexible parameters - default (30 people, 60 minutes), space-separated (`/invite 10 5`), or slash-separated (`/invite 10/5`) format; automatically adds creator name annotation to links
+    -   **Unmute Functionality:** Restores normal member permissions (messaging, media, polls); reply method is most reliable; direct method works with text_mention entities via user avatar selection
 -   **Activity Logging:** 
     -   **Two-tier log system:** System logs (bot token changes, system events) and group logs (command executions per group)
     -   **System logs:** Preserved permanently, never auto-deleted when groups are cleared; includes "🔄 刷新群组信息" actions
