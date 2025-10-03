@@ -713,6 +713,73 @@ async function handleDirectCommand(ctx: Context, command: Command): Promise<void
         );
       }
       break;
+
+    case "show_admins":
+      try {
+        // 获取群组管理员列表
+        const administrators = await ctx.getChatAdministrators();
+        
+        // 分类管理员
+        const creator = administrators.find(admin => admin.status === "creator");
+        const admins = administrators.filter(admin => admin.status === "administrator");
+        
+        // 构建消息内容
+        let message = "👥 群组管理员列表\n\n";
+        
+        // 显示创建者
+        if (creator) {
+          const creatorUser = creator.user;
+          const creatorName = creatorUser.username 
+            ? `@${creatorUser.username}` 
+            : creatorUser.first_name;
+          const creatorTitle = "custom_title" in creator && creator.custom_title 
+            ? ` | 头衔: ${creator.custom_title}` 
+            : "";
+          message += `👑 创建者：${creatorName}${creatorTitle}\n\n`;
+        }
+        
+        // 显示管理员
+        if (admins.length > 0) {
+          message += "🛡️ 管理员：\n";
+          admins.forEach((admin, index) => {
+            const adminUser = admin.user;
+            const adminName = adminUser.username 
+              ? `@${adminUser.username}` 
+              : adminUser.first_name;
+            const adminTitle = "custom_title" in admin && admin.custom_title 
+              ? ` | 头衔: ${admin.custom_title}` 
+              : "";
+            message += `${index + 1}. ${adminName}${adminTitle}\n`;
+          });
+        } else {
+          message += "ℹ️ 暂无其他管理员\n";
+        }
+        
+        await ctx.reply(message);
+        
+        // 记录日志
+        storage.createLog({
+          action: command.name,
+          details: `👥 显示管理员列表 | 创建者1人 | 管理员${admins.length}人`,
+          userName: `@${ctx.from.username || ctx.from.first_name}`,
+          groupId: String(ctx.chat.id),
+          groupTitle: chatTitle,
+          targetUserName: undefined,
+          status: "success",
+        }).catch(err => console.error("Log error:", err));
+      } catch (error: any) {
+        await ctx.reply(`❌ 获取管理员列表失败: ${error.message}`);
+        storage.createLog({
+          action: command.name,
+          details: `👥 获取管理员列表失败 | 错误: ${error.message}`,
+          userName: `@${ctx.from.username || ctx.from.first_name}`,
+          groupId: String(ctx.chat.id),
+          groupTitle: chatTitle,
+          targetUserName: undefined,
+          status: "error",
+        }).catch(err => console.error("Log error:", err));
+      }
+      break;
   }
 }
 
