@@ -451,22 +451,14 @@ async function handleDirectCommand(ctx: Context, command: Command): Promise<void
   switch (command.actionType) {
     case "unpin_all_messages":
       try {
-        // 获取当前群组信息，检查是否有置顶消息
-        const chatInfo = await ctx.telegram.getChat(ctx.chat.id);
-        
-        if ("pinned_message" in chatInfo && chatInfo.pinned_message) {
-          // 有置顶消息，直接取消最后一条置顶（快速）
-          await ctx.unpinChatMessage(chatInfo.pinned_message.message_id);
-          await ctx.reply("✅ 已取消群组置顶消息");
-        } else {
-          // 没有置顶消息
-          await ctx.reply("ℹ️ 当前群组没有置顶消息");
-        }
+        // 不传 messageId 参数，取消所有置顶消息（比 unpinAllChatMessages 快）
+        await ctx.unpinChatMessage();
+        await ctx.reply("✅ 已取消群组所有置顶消息");
         
         // 异步记录日志，不阻塞
         storage.createLog({
           action: command.name,
-          details: `📌 取消全部置顶 | 已取消群组置顶消息`,
+          details: `📌 取消全部置顶 | 已取消群组所有置顶消息`,
           userName: `@${ctx.from.username || ctx.from.first_name}`,
           groupId: String(ctx.chat.id),
           groupTitle: chatTitle,
@@ -474,10 +466,10 @@ async function handleDirectCommand(ctx: Context, command: Command): Promise<void
           status: "success",
         }).catch(err => console.error("Log error:", err));
       } catch (error: any) {
-        await ctx.reply(`❌ 取消置顶失败: ${error.message}`);
+        await ctx.reply(`❌ 取消所有置顶失败: ${error.message}`);
         storage.createLog({
           action: command.name,
-          details: `📌 取消置顶失败 | 错误: ${error.message}`,
+          details: `📌 取消所有置顶失败 | 错误: ${error.message}`,
           userName: `@${ctx.from.username || ctx.from.first_name}`,
           groupId: String(ctx.chat.id),
           groupTitle: chatTitle,
