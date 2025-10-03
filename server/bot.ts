@@ -440,6 +440,103 @@ async function handleDirectCommand(ctx: Context, command: Command): Promise<void
         status: "success",
       });
       break;
+
+    case "unmute":
+      // 直接指令方式解除禁言：从消息实体中获取被提及的用户
+      let targetUnmuteUserId: number | undefined;
+      let targetUnmuteUsername: string | undefined;
+
+      // 从消息实体中查找被提及的用户
+      // Telegram 在用户输入 @username 时会自动创建 mention entity
+      if (ctx.message.entities) {
+        // 查找 text_mention 类型（包含完整用户信息）
+        const textMention = ctx.message.entities.find(
+          (entity) => entity.type === "text_mention"
+        );
+        if (textMention && "user" in textMention) {
+          targetUnmuteUserId = textMention.user.id;
+          targetUnmuteUsername = `@${textMention.user.username || textMention.user.first_name}`;
+        }
+        
+        // 如果没有找到，查找普通 mention 类型
+        if (!targetUnmuteUserId) {
+          const mention = ctx.message.entities.find(
+            (entity) => entity.type === "mention"
+          );
+          if (mention) {
+            // 从消息文本中提取被提及的 username
+            const offset = mention.offset;
+            const length = mention.length;
+            const mentionText = messageText.substring(offset, offset + length);
+            const username = mentionText.replace("@", "");
+            targetUnmuteUsername = `@${username}`;
+            
+            // 尝试通过 getChat 获取用户信息
+            try {
+              const chat = await ctx.telegram.getChat(`@${username}`);
+              if (chat.type === "private" && "id" in chat) {
+                targetUnmuteUserId = chat.id;
+              }
+            } catch (error) {
+              // 如果获取失败，提示使用回复方式
+              await ctx.reply(
+                `❌ 无法通过 @${username} 找到用户\n\n` +
+                `💡 建议使用回复方式：\n` +
+                `1. 找到该用户的任意一条消息\n` +
+                `2. 回复该消息\n` +
+                `3. 输入解除禁言指令`
+              );
+              break;
+            }
+          }
+        }
+      }
+
+      if (targetUnmuteUserId) {
+        // 解除禁言：恢复用户的发言权限
+        await ctx.restrictChatMember(targetUnmuteUserId, {
+          permissions: {
+            can_send_messages: true,
+            can_send_audios: true,
+            can_send_documents: true,
+            can_send_photos: true,
+            can_send_videos: true,
+            can_send_video_notes: true,
+            can_send_voice_notes: true,
+            can_send_polls: true,
+            can_send_other_messages: true,
+            can_add_web_page_previews: true,
+            can_change_info: true,
+            can_invite_users: true,
+            can_pin_messages: true,
+            can_manage_topics: true,
+          },
+        });
+
+        await ctx.reply(`✅ 已解除 ${targetUnmuteUsername} 的禁言`);
+
+        await storage.createLog({
+          action: command.name,
+          details: `🔊 解除禁言 | 用户已恢复发言权限`,
+          userName: `@${ctx.from.username || ctx.from.first_name}`,
+          groupId: String(ctx.chat.id),
+          groupTitle: chatTitle,
+          targetUserName: targetUnmuteUsername,
+          status: "success",
+        });
+      } else {
+        await ctx.reply(
+          `❌ 请使用以下方式之一解除禁言：\n\n` +
+          `方式1（推荐）：\n` +
+          `• 回复被禁言用户的消息\n` +
+          `• 输入解除禁言指令\n\n` +
+          `方式2：\n` +
+          `• 点击用户头像选择用户\n` +
+          `• 在消息中 @ 提及该用户\n` +
+          `• 输入解除禁言指令`
+        );
+      }
+      break;
   }
 }
 
