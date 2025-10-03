@@ -495,7 +495,8 @@ async function handleDirectCommand(ctx: Context, command: Command): Promise<void
       }
 
       if (targetUnmuteUserId) {
-        // 解除禁言：恢复用户的发言权限
+        const currentTime = Math.floor(Date.now() / 1000);
+        
         await ctx.restrictChatMember(targetUnmuteUserId, {
           permissions: {
             can_send_messages: true,
@@ -508,11 +509,12 @@ async function handleDirectCommand(ctx: Context, command: Command): Promise<void
             can_send_polls: true,
             can_send_other_messages: true,
             can_add_web_page_previews: true,
-            can_change_info: true,
-            can_invite_users: true,
-            can_pin_messages: true,
-            can_manage_topics: true,
+            can_change_info: false,
+            can_invite_users: false,
+            can_pin_messages: false,
+            can_manage_topics: false,
           },
+          until_date: currentTime + 30,
         });
 
         await ctx.reply(`✅ 已解除 ${targetUnmuteUsername} 的禁言`);
