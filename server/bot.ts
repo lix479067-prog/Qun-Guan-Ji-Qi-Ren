@@ -451,12 +451,24 @@ async function handleDirectCommand(ctx: Context, command: Command): Promise<void
       break;
 
     case "set_group_name":
-      const nameMatch = messageText.match(/设置群名\s+(.+)/);
+      // 使用动态匹配，支持任意指令名称后跟内容
+      const commandNameEscaped = command.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const nameMatch = messageText.match(new RegExp(`${commandNameEscaped}\\s+(.+)`));
       const newName = nameMatch ? nameMatch[1].trim() : "";
       
-      if (newName) {
+      if (!newName) {
+        await ctx.reply(
+          `❌ 请提供群组名称\n\n` +
+          `格式：${command.name} 新群名\n` +
+          `示例：${command.name} 我的超级群组`
+        );
+        return;
+      }
+      
+      try {
         await ctx.setChatTitle(newName);
-        await storage.createLog({
+        await ctx.reply(`✅ 群组名称已修改为 "${newName}"`);
+        storage.createLog({
           action: command.name,
           details: `✏️ 修改群组名称 | 新名称: "${newName}"`,
           userName: `@${ctx.from.username || ctx.from.first_name}`,
@@ -464,17 +476,31 @@ async function handleDirectCommand(ctx: Context, command: Command): Promise<void
           groupTitle: chatTitle,
           targetUserName: undefined,
           status: "success",
-        });
+        }).catch(err => console.error("Log error:", err));
+      } catch (error: any) {
+        await ctx.reply(`❌ 修改群组名称失败: ${error.message}`);
       }
       break;
 
     case "set_group_description":
-      const descMatch = messageText.match(/设置简介\s+(.+)/);
+      // 使用动态匹配，支持任意指令名称后跟内容
+      const commandDescEscaped = command.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const descMatch = messageText.match(new RegExp(`${commandDescEscaped}\\s+(.+)`));
       const newDesc = descMatch ? descMatch[1].trim() : "";
       
-      if (newDesc) {
+      if (!newDesc) {
+        await ctx.reply(
+          `❌ 请提供群组简介内容\n\n` +
+          `格式：${command.name} 简介内容\n` +
+          `示例：${command.name} 这是一个技术交流群`
+        );
+        return;
+      }
+      
+      try {
         await ctx.setChatDescription(newDesc);
-        await storage.createLog({
+        await ctx.reply(`✅ 群组简介已设置\n\n${newDesc}`);
+        storage.createLog({
           action: command.name,
           details: `📝 修改群组简介 | 简介内容: "${newDesc.substring(0, 50)}${newDesc.length > 50 ? '...' : ''}"`,
           userName: `@${ctx.from.username || ctx.from.first_name}`,
@@ -482,21 +508,28 @@ async function handleDirectCommand(ctx: Context, command: Command): Promise<void
           groupTitle: chatTitle,
           targetUserName: undefined,
           status: "success",
-        });
+        }).catch(err => console.error("Log error:", err));
+      } catch (error: any) {
+        await ctx.reply(`❌ 设置群组简介失败: ${error.message}`);
       }
       break;
 
     case "delete_group_description":
-      await ctx.setChatDescription("");
-      await storage.createLog({
-        action: command.name,
-        details: `📝 删除群组简介 | 已清空群组简介内容`,
-        userName: `@${ctx.from.username || ctx.from.first_name}`,
-        groupId: String(ctx.chat.id),
-        groupTitle: chatTitle,
-        targetUserName: undefined,
-        status: "success",
-      });
+      try {
+        await ctx.setChatDescription("");
+        await ctx.reply("✅ 群组简介已删除");
+        storage.createLog({
+          action: command.name,
+          details: `📝 删除群组简介 | 已清空群组简介内容`,
+          userName: `@${ctx.from.username || ctx.from.first_name}`,
+          groupId: String(ctx.chat.id),
+          groupTitle: chatTitle,
+          targetUserName: undefined,
+          status: "success",
+        }).catch(err => console.error("Log error:", err));
+      } catch (error: any) {
+        await ctx.reply(`❌ 删除群组简介失败: ${error.message}`);
+      }
       break;
 
     case "unmute":
