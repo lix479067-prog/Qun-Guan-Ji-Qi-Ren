@@ -8,6 +8,9 @@ import { startBot, stopBot, getBotStatus, getBotInstance, sendGroupActivationNot
 import { insertGroupWhitelistSchema, insertCommandSchema } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Trust proxy for production deployments (Replit uses proxies)
+  app.set('trust proxy', 1);
+
   // Session setup
   const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
   const pgStore = connectPg(session);
@@ -22,6 +25,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     throw new Error("SESSION_SECRET must be set");
   }
 
+  const isProduction = process.env.NODE_ENV === "production";
+
   app.use(
     session({
       secret: process.env.SESSION_SECRET,
@@ -30,7 +35,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       saveUninitialized: false,
       cookie: {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
+        secure: isProduction,
+        sameSite: isProduction ? 'none' : 'lax',
         maxAge: sessionTtl,
       },
     })
