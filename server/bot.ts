@@ -172,6 +172,7 @@ async function handleReplyCommand(ctx: Context, command: Command): Promise<void>
     case "unpin_message":
       try {
         await ctx.unpinChatMessage(replyToMessageId);
+        await ctx.reply("✅ 消息已取消置顶");
         await storage.createLog({
           action: command.name,
           details: `📌 取消置顶 | 消息ID: ${replyToMessageId}`,
@@ -355,6 +356,7 @@ async function handleDirectCommand(ctx: Context, command: Command): Promise<void
   switch (command.actionType) {
     case "unpin_all_messages":
       await ctx.unpinAllChatMessages();
+      await ctx.reply("✅ 已取消群组所有置顶消息");
       await storage.createLog({
         action: command.name,
         details: `📌 取消全部置顶 | 已取消群组所有置顶消息`,
