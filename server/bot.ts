@@ -142,9 +142,9 @@ export async function startBot(token: string): Promise<void> {
           if (member.status === "creator" || member.status === "administrator") {
             await ctx.reply(
               `📋 群组信息\n\n` +
-              `群组ID: ${chatId}\n` +
+              `群组ID: \`${chatId}\`\n` +
               `群组名称: ${chatTitle || "未知"}\n\n` +
-              `💡 复制群组ID并在管理面板中添加到白名单即可启用机器人功能。`
+              `💡 点击群组ID即可复制，然后在管理面板中添加到白名单即可启用机器人功能。`
             );
           }
         }
