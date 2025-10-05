@@ -1,7 +1,7 @@
 import { Telegraf, Context } from "telegraf";
 import { message } from "telegraf/filters";
 import { storage } from "./storage";
-import type { BotConfig, Command, WhitelistedGroup } from "@shared/schema";
+import type { BotConfig, Command, GroupWhitelist } from "@shared/schema";
 
 let bot: Telegraf | null = null;
 let botConfig: BotConfig | null = null;
@@ -10,13 +10,13 @@ let botConfig: BotConfig | null = null;
 const CACHE_TTL = 30 * 60 * 1000; // 30分钟
 
 // 白名单群组缓存：使用 Map 存储，key 为 groupId
-const whitelistCache = new Map<string, { data: WhitelistedGroup; expireAt: number }>();
+const whitelistCache = new Map<string, { data: GroupWhitelist; expireAt: number }>();
 
 // 命令列表缓存
 let commandsCache: { data: Command[]; expireAt: number } | null = null;
 
 // 获取白名单群组（带缓存）
-async function getWhitelistedGroup(groupId: string): Promise<WhitelistedGroup | null> {
+async function getWhitelistedGroup(groupId: string): Promise<GroupWhitelist | null | undefined> {
   const now = Date.now();
   const cached = whitelistCache.get(groupId);
   

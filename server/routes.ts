@@ -4,7 +4,7 @@ import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { storage } from "./storage";
 import { hashPassword, verifyPassword, isAuthenticated } from "./auth";
-import { startBot, stopBot, getBotStatus, getBotInstance, sendGroupActivationNotice } from "./bot";
+import { startBot, stopBot, getBotStatus, getBotInstance, sendGroupActivationNotice, clearCache } from "./bot";
 import { insertGroupWhitelistSchema, insertCommandSchema } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -113,6 +113,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Stop existing bot and start new one FIRST
       await stopBot();
       await startBot(token);
+      
+      // 清除缓存
+      clearCache();
 
       // 只有在机器人成功启动后，才清空群组白名单（避免token无效时数据丢失）
       if (clearGroups === true) {
@@ -201,6 +204,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         details: `群组 ${group.groupTitle || group.groupId} 已添加`,
         status: "success",
       });
+      
+      // 清除缓存
+      clearCache();
 
       res.json(group);
     } catch (error: any) {
@@ -223,6 +229,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         details: `群组 ${group.groupTitle || group.groupId} 已移除`,
         status: "success",
       });
+      
+      // 清除缓存
+      clearCache();
 
       res.json({ success: true });
     } catch (error) {
@@ -269,6 +278,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         groupId: undefined,
         groupTitle: undefined,
       });
+      
+      // 清除缓存
+      clearCache();
 
       res.json(updatedGroup);
     } catch (error: any) {
@@ -306,6 +318,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         details: `指令 "${command.name}" 已创建`,
         status: "success",
       });
+      
+      // 清除缓存
+      clearCache();
 
       res.json(command);
     } catch (error: any) {
@@ -323,6 +338,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         details: `指令 "${command.name}" 已更新`,
         status: "success",
       });
+      
+      // 清除缓存
+      clearCache();
 
       res.json(command);
     } catch (error) {
@@ -344,6 +362,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         details: `指令 "${command.name}" 已删除`,
         status: "success",
       });
+      
+      // 清除缓存
+      clearCache();
 
       res.json({ success: true });
     } catch (error) {
