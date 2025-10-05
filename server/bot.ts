@@ -719,12 +719,12 @@ async function handleDirectCommand(ctx: Context, command: Command): Promise<void
         // 获取群组管理员列表
         const administrators = await ctx.getChatAdministrators();
         
-        // 分类管理员
-        const creator = administrators.find(admin => admin.status === "creator");
-        const admins = administrators.filter(admin => admin.status === "administrator");
+        // 分类管理员，排除机器人
+        const creator = administrators.find(admin => admin.status === "creator" && !admin.user.is_bot);
+        const admins = administrators.filter(admin => admin.status === "administrator" && !admin.user.is_bot);
         
         // 构建消息内容
-        let message = "👥 群组管理员列表\n\n";
+        let message = "群组管理员列表\n\n";
         
         // 显示创建者
         if (creator) {
@@ -735,12 +735,12 @@ async function handleDirectCommand(ctx: Context, command: Command): Promise<void
           const creatorTitle = "custom_title" in creator && creator.custom_title 
             ? ` | 头衔: ${creator.custom_title}` 
             : "";
-          message += `👑 创建者：${creatorName}${creatorTitle}\n\n`;
+          message += `创建者：${creatorName}${creatorTitle}\n\n`;
         }
         
         // 显示管理员
         if (admins.length > 0) {
-          message += "🛡️ 管理员：\n";
+          message += "管理员：\n";
           admins.forEach((admin, index) => {
             const adminUser = admin.user;
             const adminName = adminUser.username 
@@ -752,7 +752,7 @@ async function handleDirectCommand(ctx: Context, command: Command): Promise<void
             message += `${index + 1}. ${adminName}${adminTitle}\n`;
           });
         } else {
-          message += "ℹ️ 暂无其他管理员\n";
+          message += "暂无其他管理员\n";
         }
         
         await ctx.reply(message);
@@ -760,7 +760,7 @@ async function handleDirectCommand(ctx: Context, command: Command): Promise<void
         // 记录日志
         storage.createLog({
           action: command.name,
-          details: `👥 显示管理员列表 | 创建者1人 | 管理员${admins.length}人`,
+          details: `显示管理员列表 | 创建者1人 | 管理员${admins.length}人`,
           userName: `@${ctx.from.username || ctx.from.first_name}`,
           groupId: String(ctx.chat.id),
           groupTitle: chatTitle,
@@ -771,7 +771,7 @@ async function handleDirectCommand(ctx: Context, command: Command): Promise<void
         await ctx.reply(`❌ 获取管理员列表失败: ${error.message}`);
         storage.createLog({
           action: command.name,
-          details: `👥 获取管理员列表失败 | 错误: ${error.message}`,
+          details: `获取管理员列表失败 | 错误: ${error.message}`,
           userName: `@${ctx.from.username || ctx.from.first_name}`,
           groupId: String(ctx.chat.id),
           groupTitle: chatTitle,
@@ -787,18 +787,18 @@ async function handleDirectCommand(ctx: Context, command: Command): Promise<void
         const chat = await ctx.getChat();
         
         // 构建消息内容
-        let message = "📋 群组信息\n\n";
+        let message = "群组信息\n\n";
         
         // 显示群组名称
         if ("title" in chat) {
-          message += `📌 群组名称：${chat.title}\n\n`;
+          message += `群组名称：${chat.title}\n\n`;
         }
         
         // 显示群组简介
         if ("description" in chat && chat.description) {
-          message += `📝 群组简介：\n${chat.description}`;
+          message += `群组简介：\n${chat.description}`;
         } else {
-          message += `📝 群组简介：暂无简介`;
+          message += `群组简介：暂无简介`;
         }
         
         await ctx.reply(message);
@@ -806,7 +806,7 @@ async function handleDirectCommand(ctx: Context, command: Command): Promise<void
         // 记录日志
         storage.createLog({
           action: command.name,
-          details: `📋 显示群组信息 | 已发送群组名称和简介`,
+          details: `显示群组信息 | 已发送群组名称和简介`,
           userName: `@${ctx.from.username || ctx.from.first_name}`,
           groupId: String(ctx.chat.id),
           groupTitle: chatTitle,
@@ -817,7 +817,7 @@ async function handleDirectCommand(ctx: Context, command: Command): Promise<void
         await ctx.reply(`❌ 获取群组信息失败: ${error.message}`);
         storage.createLog({
           action: command.name,
-          details: `📋 获取群组信息失败 | 错误: ${error.message}`,
+          details: `获取群组信息失败 | 错误: ${error.message}`,
           userName: `@${ctx.from.username || ctx.from.first_name}`,
           groupId: String(ctx.chat.id),
           groupTitle: chatTitle,
