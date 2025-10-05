@@ -152,10 +152,15 @@ export async function startBot(token: string): Promise<void> {
         });
       } else if (isKicked) {
         // 成员被踢出或封禁
+        // ctx.from 是执行操作的管理员
+        const operatorName = ctx.from.username 
+          ? `@${ctx.from.username}` 
+          : ctx.from.first_name;
+        
         await storage.createLog({
           action: "成员被移除",
           details: `🚫 成员被移除出群组`,
-          userName: undefined,
+          userName: operatorName,
           groupId: chatId,
           groupTitle: chatTitle,
           targetUserName: memberName,
