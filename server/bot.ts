@@ -780,6 +780,52 @@ async function handleDirectCommand(ctx: Context, command: Command): Promise<void
         }).catch(err => console.error("Log error:", err));
       }
       break;
+
+    case "show_group_info":
+      try {
+        // 获取群组完整信息
+        const chat = await ctx.getChat();
+        
+        // 构建消息内容
+        let message = "📋 群组信息\n\n";
+        
+        // 显示群组名称
+        if ("title" in chat) {
+          message += `📌 群组名称：${chat.title}\n\n`;
+        }
+        
+        // 显示群组简介
+        if ("description" in chat && chat.description) {
+          message += `📝 群组简介：\n${chat.description}`;
+        } else {
+          message += `📝 群组简介：暂无简介`;
+        }
+        
+        await ctx.reply(message);
+        
+        // 记录日志
+        storage.createLog({
+          action: command.name,
+          details: `📋 显示群组信息 | 已发送群组名称和简介`,
+          userName: `@${ctx.from.username || ctx.from.first_name}`,
+          groupId: String(ctx.chat.id),
+          groupTitle: chatTitle,
+          targetUserName: undefined,
+          status: "success",
+        }).catch(err => console.error("Log error:", err));
+      } catch (error: any) {
+        await ctx.reply(`❌ 获取群组信息失败: ${error.message}`);
+        storage.createLog({
+          action: command.name,
+          details: `📋 获取群组信息失败 | 错误: ${error.message}`,
+          userName: `@${ctx.from.username || ctx.from.first_name}`,
+          groupId: String(ctx.chat.id),
+          groupTitle: chatTitle,
+          targetUserName: undefined,
+          status: "error",
+        }).catch(err => console.error("Log error:", err));
+      }
+      break;
   }
 }
 
