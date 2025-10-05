@@ -197,9 +197,9 @@ export default function ActivityLogs() {
               </div>
             </div>
           ) : (
-            <Tabs value={selectedGroupId} onValueChange={setSelectedGroupId} className="flex-1 flex flex-col min-h-0">
+            <Tabs value={selectedGroupId} onValueChange={setSelectedGroupId} className="flex-1 flex flex-col min-h-0 overflow-hidden">
               {/* 群组标签页 */}
-              <div className="bg-muted/30 px-4 border-b border-border">
+              <div className="bg-muted/30 px-4 border-b border-border flex-shrink-0">
                 <TabsList className="bg-transparent h-auto p-0 gap-1">
                   {groups.map((group) => {
                     const logCount = groupLogsMap[group.groupId]?.length || 0;
@@ -227,7 +227,7 @@ export default function ActivityLogs() {
                   <TabsContent
                     key={group.groupId}
                     value={group.groupId}
-                    className="flex-1 m-0 flex flex-col overflow-hidden"
+                    className="flex-1 m-0 p-0 flex flex-col overflow-hidden h-full data-[state=inactive]:hidden"
                   >
                     {/* 导出按钮 */}
                     <div className="px-4 py-2 border-b border-border bg-muted/10 flex justify-end gap-2 flex-shrink-0">
@@ -254,59 +254,61 @@ export default function ActivityLogs() {
                     </div>
 
                     {/* 日志列表 */}
-                    <div className="flex-1 overflow-y-auto divide-y divide-border/50 min-h-0">
+                    <div className="flex-1 overflow-y-auto min-h-0">
                       {groupLogs.length === 0 ? (
                         <div className="p-8 text-center text-muted-foreground">
                           <FileText className="w-10 h-10 mx-auto mb-2 opacity-50" />
                           <p className="text-sm">该群组暂无操作记录</p>
                         </div>
                       ) : (
-                        groupLogs.map((log) => (
-                          <div
-                            key={log.id}
-                            className="p-4 hover:bg-muted/30 transition-colors"
-                            data-testid={`log-group-${log.id}`}
-                          >
-                            <div className="flex items-start gap-3">
-                              <div className={`w-8 h-8 rounded flex items-center justify-center flex-shrink-0 ${getStatusColor(log.status)}`}>
-                                {getStatusIcon(log.status)}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2 flex-wrap mb-2">
-                                  <span className="text-sm font-medium text-foreground">
-                                    {log.action}
-                                  </span>
-                                  <span className={`px-2 py-0.5 text-xs rounded ${getStatusColor(log.status)}`}>
-                                    {log.status === "success" ? "成功" : "失败"}
-                                  </span>
+                        <div className="divide-y divide-border/50">
+                          {groupLogs.map((log) => (
+                            <div
+                              key={log.id}
+                              className="p-4 hover:bg-muted/30 transition-colors"
+                              data-testid={`log-group-${log.id}`}
+                            >
+                              <div className="flex items-start gap-3">
+                                <div className={`w-8 h-8 rounded flex items-center justify-center flex-shrink-0 ${getStatusColor(log.status)}`}>
+                                  {getStatusIcon(log.status)}
                                 </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2 flex-wrap mb-2">
+                                    <span className="text-sm font-medium text-foreground">
+                                      {log.action}
+                                    </span>
+                                    <span className={`px-2 py-0.5 text-xs rounded ${getStatusColor(log.status)}`}>
+                                      {log.status === "success" ? "成功" : "失败"}
+                                    </span>
+                                  </div>
 
-                                {log.details && (
-                                  <p className="text-sm text-muted-foreground mb-2">{log.details}</p>
-                                )}
-                                
-                                <div className="flex items-center gap-2 flex-wrap text-xs text-muted-foreground">
-                                  {log.userName && (
-                                    <>
-                                      <span className="text-primary font-medium">{log.userName}</span>
-                                      {log.targetUserName && <span>→</span>}
-                                    </>
+                                  {log.details && (
+                                    <p className="text-sm text-muted-foreground mb-2">{log.details}</p>
                                   )}
-                                  {log.targetUserName && (
-                                    <span className="text-orange-400 font-medium">{log.targetUserName}</span>
-                                  )}
-                                  <span>·</span>
-                                  <span>
-                                    {formatDistanceToNow(new Date(log.timestamp), {
-                                      addSuffix: true,
-                                      locale: zhCN,
-                                    })}
-                                  </span>
+                                  
+                                  <div className="flex items-center gap-2 flex-wrap text-xs text-muted-foreground">
+                                    {log.userName && (
+                                      <>
+                                        <span className="text-primary font-medium">{log.userName}</span>
+                                        {log.targetUserName && <span>→</span>}
+                                      </>
+                                    )}
+                                    {log.targetUserName && (
+                                      <span className="text-orange-400 font-medium">{log.targetUserName}</span>
+                                    )}
+                                    <span>·</span>
+                                    <span>
+                                      {formatDistanceToNow(new Date(log.timestamp), {
+                                        addSuffix: true,
+                                        locale: zhCN,
+                                      })}
+                                    </span>
+                                  </div>
                                 </div>
                               </div>
                             </div>
-                          </div>
-                        ))
+                          ))}
+                        </div>
                       )}
                     </div>
                   </TabsContent>
