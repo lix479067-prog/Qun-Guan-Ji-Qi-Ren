@@ -64,7 +64,7 @@ export async function startBot(token: string): Promise<void> {
     status: "success",
   });
 
-  // 监听新成员加入事件（通过邀请链接）
+  // 监听成员变化事件（入群、退群等）
   bot.on("chat_member", async (ctx) => {
     try {
       const chatId = ctx.chat.id.toString();
@@ -79,46 +79,86 @@ export async function startBot(token: string): Promise<void> {
       const oldStatus = ctx.chatMember.old_chat_member.status;
       const newStatus = ctx.chatMember.new_chat_member.status;
       const inviteLink = ctx.chatMember.invite_link;
+      const member = ctx.chatMember.new_chat_member.user;
+      const memberName = member.username 
+        ? `@${member.username}` 
+        : member.first_name;
 
       // 检测新成员加入（状态从 left/kicked 变为 member/administrator/creator）
       const isJoining = (oldStatus === "left" || oldStatus === "kicked") && 
                         (newStatus === "member" || newStatus === "administrator" || newStatus === "creator");
 
-      if (isJoining && inviteLink) {
-        const newMember = ctx.chatMember.new_chat_member.user;
-        const newMemberName = newMember.username 
-          ? `@${newMember.username}` 
-          : newMember.first_name;
+      // 检测成员退出（状态从 member 变为 left）
+      const isLeaving = oldStatus === "member" && newStatus === "left";
 
-        // 从邀请链接的 name 字段提取创建人（格式：@username创建）
-        let creatorInfo = "未知";
-        if (inviteLink.name) {
-          const match = inviteLink.name.match(/(@\w+)创建/);
-          if (match) {
-            creatorInfo = match[1];
+      // 检测成员被踢出（状态从 member 变为 kicked）
+      const isKicked = oldStatus === "member" && newStatus === "kicked";
+
+      if (isJoining) {
+        // 新成员加入
+        if (inviteLink) {
+          // 通过邀请链接加入
+          let creatorInfo = "未知";
+          if (inviteLink.name) {
+            const match = inviteLink.name.match(/(@\w+)创建/);
+            if (match) {
+              creatorInfo = match[1];
+            }
+          } else if (inviteLink.creator) {
+            creatorInfo = inviteLink.creator.username 
+              ? `@${inviteLink.creator.username}` 
+              : inviteLink.creator.first_name;
           }
-        } else if (inviteLink.creator) {
-          // 如果没有 name，使用 creator 字段
-          creatorInfo = inviteLink.creator.username 
-            ? `@${inviteLink.creator.username}` 
-            : inviteLink.creator.first_name;
+
+          // 发送欢迎消息
+          await bot!.telegram.sendMessage(
+            chatId,
+            `🎉 欢迎新成员！\n\n` +
+            `👤 ${memberName} 通过 ${creatorInfo} 的邀请链接加入了群组`
+          );
+
+          // 记录日志
+          await storage.createLog({
+            action: "成员加入",
+            details: `👥 通过邀请链接加入 | 邀请人: ${creatorInfo}`,
+            userName: creatorInfo,
+            groupId: chatId,
+            groupTitle: chatTitle,
+            targetUserName: memberName,
+            status: "success",
+          });
+        } else {
+          // 直接加入（如通过群链接、被添加等）
+          await storage.createLog({
+            action: "成员加入",
+            details: `👥 新成员加入群组`,
+            userName: undefined,
+            groupId: chatId,
+            groupTitle: chatTitle,
+            targetUserName: memberName,
+            status: "success",
+          });
         }
-
-        // 发送通知消息
-        await bot!.telegram.sendMessage(
-          chatId,
-          `🎉 欢迎新成员！\n\n` +
-          `👤 ${newMemberName} 通过 ${creatorInfo} 的邀请链接加入了群组`
-        );
-
-        // 记录日志
+      } else if (isLeaving) {
+        // 成员主动退出
         await storage.createLog({
-          action: "新成员加入",
-          details: `👥 新成员通过邀请链接加入 | 新成员: ${newMemberName} | 邀请人: ${creatorInfo}`,
-          userName: creatorInfo,
+          action: "成员退出",
+          details: `👋 成员主动退出群组`,
+          userName: undefined,
           groupId: chatId,
           groupTitle: chatTitle,
-          targetUserName: newMemberName,
+          targetUserName: memberName,
+          status: "success",
+        });
+      } else if (isKicked) {
+        // 成员被踢出或封禁
+        await storage.createLog({
+          action: "成员被移除",
+          details: `🚫 成员被移除出群组`,
+          userName: undefined,
+          groupId: chatId,
+          groupTitle: chatTitle,
+          targetUserName: memberName,
           status: "success",
         });
       }
