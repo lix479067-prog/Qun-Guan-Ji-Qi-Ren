@@ -1,10 +1,74 @@
 import { Telegraf, Context } from "telegraf";
 import { message } from "telegraf/filters";
 import { storage } from "./storage";
-import type { BotConfig, Command } from "@shared/schema";
+import type { BotConfig, Command, WhitelistedGroup } from "@shared/schema";
 
 let bot: Telegraf | null = null;
 let botConfig: BotConfig | null = null;
+
+// 缓存配置
+const CACHE_TTL = 30 * 60 * 1000; // 30分钟
+
+// 白名单群组缓存：使用 Map 存储，key 为 groupId
+const whitelistCache = new Map<string, { data: WhitelistedGroup; expireAt: number }>();
+
+// 命令列表缓存
+let commandsCache: { data: Command[]; expireAt: number } | null = null;
+
+// 获取白名单群组（带缓存）
+async function getWhitelistedGroup(groupId: string): Promise<WhitelistedGroup | null> {
+  const now = Date.now();
+  const cached = whitelistCache.get(groupId);
+  
+  // 检查缓存是否有效
+  if (cached && cached.expireAt > now) {
+    return cached.data;
+  }
+  
+  // 缓存失效或不存在，从数据库查询
+  const group = await storage.getGroupByGroupId(groupId);
+  
+  // 更新缓存
+  if (group) {
+    whitelistCache.set(groupId, {
+      data: group,
+      expireAt: now + CACHE_TTL
+    });
+  } else {
+    // 即使查询结果为 null，也缓存一段时间避免重复查询
+    whitelistCache.delete(groupId);
+  }
+  
+  return group;
+}
+
+// 获取所有命令（带缓存）
+async function getAllCommands(): Promise<Command[]> {
+  const now = Date.now();
+  
+  // 检查缓存是否有效
+  if (commandsCache && commandsCache.expireAt > now) {
+    return commandsCache.data;
+  }
+  
+  // 缓存失效或不存在，从数据库查询
+  const commands = await storage.getAllCommands();
+  
+  // 更新缓存
+  commandsCache = {
+    data: commands,
+    expireAt: now + CACHE_TTL
+  };
+  
+  return commands;
+}
+
+// 清除所有缓存（当配置更新时调用）
+export function clearCache(): void {
+  whitelistCache.clear();
+  commandsCache = null;
+  console.log("🔄 Cache cleared");
+}
 
 // 辅助函数：发送消息并在指定时间后自动删除
 async function sendAndDeleteMessage(
@@ -70,8 +134,8 @@ export async function startBot(token: string): Promise<void> {
       const chatId = ctx.chat.id.toString();
       const chatTitle = "title" in ctx.chat ? ctx.chat.title : undefined;
       
-      // 检查是否在白名单群组中
-      const whitelistedGroup = await storage.getGroupByGroupId(chatId);
+      // 检查是否在白名单群组中（使用缓存）
+      const whitelistedGroup = await getWhitelistedGroup(chatId);
       if (!whitelistedGroup || !whitelistedGroup.isActive) {
         return;
       }
@@ -210,7 +274,7 @@ export async function startBot(token: string): Promise<void> {
         return;
       }
 
-      const whitelistedGroup = await storage.getGroupByGroupId(chatId);
+      const whitelistedGroup = await getWhitelistedGroup(chatId);
       if (!whitelistedGroup || !whitelistedGroup.isActive) {
         return;
       }
@@ -220,7 +284,7 @@ export async function startBot(token: string): Promise<void> {
         return;
       }
 
-      const allCommands = await storage.getAllCommands();
+      const allCommands = await getAllCommands();
       
       let matchingCommand: Command | undefined;
       
