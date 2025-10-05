@@ -53,6 +53,7 @@ const actionTypesByTrigger = {
     { value: "delete_group_description", label: "删除群组简介" },
     { value: "unmute", label: "解除禁言" },
     { value: "show_admins", label: "显示管理员" },
+    { value: "show_group_info", label: "显示群组信息" },
   ],
 } as const;
 
