@@ -39,8 +39,8 @@ export default function Sidebar() {
       {/* Navigation Menu */}
       <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
         <Link href="/">
-          <a
-            className={`flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors ${
+          <div
+            className={`flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors cursor-pointer ${
               location === "/" || location === "/dashboard"
                 ? "bg-primary text-primary-foreground"
                 : "hover:bg-muted text-muted-foreground hover:text-foreground"
@@ -49,12 +49,12 @@ export default function Sidebar() {
           >
             <Home className="w-5 h-5" />
             <span>仪表盘</span>
-          </a>
+          </div>
         </Link>
 
         <Link href="/group-settings">
-          <a
-            className={`flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors ${
+          <div
+            className={`flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors cursor-pointer ${
               location === "/group-settings"
                 ? "bg-primary text-primary-foreground"
                 : "hover:bg-muted text-muted-foreground hover:text-foreground"
@@ -63,12 +63,12 @@ export default function Sidebar() {
           >
             <Settings className="w-5 h-5" />
             <span>群组设置</span>
-          </a>
+          </div>
         </Link>
 
         <Link href="/logs">
-          <a
-            className={`flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors ${
+          <div
+            className={`flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors cursor-pointer ${
               location === "/logs"
                 ? "bg-primary text-primary-foreground"
                 : "hover:bg-muted text-muted-foreground hover:text-foreground"
@@ -77,7 +77,7 @@ export default function Sidebar() {
           >
             <FileText className="w-5 h-5" />
             <span>活动日志</span>
-          </a>
+          </div>
         </Link>
       </nav>
 

@@ -14,10 +14,15 @@ Preferred communication style: Simple, everyday language.
 
 -   **Framework:** React 18 with TypeScript.
 -   **Build Tool:** Vite.
--   **Routing:** Wouter.
+-   **Routing:** Wouter with multi-page navigation.
 -   **UI:** shadcn/ui (Radix UI) and Tailwind CSS with a custom dark theme.
 -   **State Management:** TanStack Query for server state; React Hook Form with Zod for form validation.
 -   **Design:** Component-based, dark theme, Chinese language UI, mobile-responsive.
+-   **Page Structure:**
+    -   **Dashboard (/):** Statistics overview (active groups, configured commands, uptime) and bot configuration
+    -   **Group Settings (/group-settings):** Group whitelist management and command configuration in two-column layout
+    -   **Logs (/logs):** Activity logging with system logs (30%) and group logs (70%) in horizontal split layout
+-   **Navigation:** Persistent sidebar with active route highlighting, proper authentication state handling during loading
 
 ### Backend
 
