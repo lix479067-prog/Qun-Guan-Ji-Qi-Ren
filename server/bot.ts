@@ -182,9 +182,10 @@ export async function startBot(token: string): Promise<void> {
           if (member.status === "creator" || member.status === "administrator") {
             await ctx.reply(
               `📋 群组信息\n\n` +
-              `群组ID（点击复制按钮）：\n\`\`\`text\n${chatId}\n\`\`\`\n` +
+              `群组ID（长按可复制）：\n<code>${chatId}</code>\n\n` +
               `群组名称: ${chatTitle || "未知"}\n\n` +
-              `💡 点击代码块右上角的复制按钮，然后在管理面板中添加到白名单即可启用机器人功能。`
+              `💡 长按上方ID即可复制，然后在管理面板中添加到白名单即可启用机器人功能。`,
+              { parse_mode: 'HTML' }
             );
           }
         }
