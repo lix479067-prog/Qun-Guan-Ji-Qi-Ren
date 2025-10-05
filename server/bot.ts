@@ -182,10 +182,24 @@ export async function startBot(token: string): Promise<void> {
           if (member.status === "creator" || member.status === "administrator") {
             await ctx.reply(
               `📋 群组信息\n\n` +
-              `群组ID（长按可复制）：\n<code>${chatId}</code>\n\n` +
+              `群组ID: <code>${chatId}</code>\n` +
               `群组名称: ${chatTitle || "未知"}\n\n` +
-              `💡 长按上方ID即可复制，然后在管理面板中添加到白名单即可启用机器人功能。`,
-              { parse_mode: 'HTML' }
+              `💡 点击下方按钮即可复制群组ID`,
+              {
+                parse_mode: 'HTML',
+                reply_markup: {
+                  inline_keyboard: [
+                    [
+                      {
+                        text: '📋 复制群组ID',
+                        copy_text: {
+                          text: chatId
+                        }
+                      } as any
+                    ]
+                  ]
+                }
+              }
             );
           }
         }
