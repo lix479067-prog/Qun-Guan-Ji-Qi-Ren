@@ -6,6 +6,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
 import Login from "@/pages/login";
 import Dashboard from "@/pages/dashboard";
+import GroupSettings from "@/pages/group-settings";
+import Logs from "@/pages/logs";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -33,6 +35,8 @@ function Router() {
         <>
           <Route path="/" component={Dashboard} />
           <Route path="/dashboard" component={Dashboard} />
+          <Route path="/group-settings" component={GroupSettings} />
+          <Route path="/logs" component={Logs} />
         </>
       )}
       <Route component={NotFound} />
