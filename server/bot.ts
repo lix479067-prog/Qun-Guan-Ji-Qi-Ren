@@ -10,7 +10,7 @@ let botConfig: BotConfig | null = null;
 const CACHE_TTL = 30 * 60 * 1000; // 30分钟
 
 // 白名单群组缓存：使用 Map 存储，key 为 groupId
-const whitelistCache = new Map<string, { data: GroupWhitelist; expireAt: number }>();
+const whitelistCache = new Map<string, { data: GroupWhitelist | null; expireAt: number }>();
 
 // 命令列表缓存
 let commandsCache: { data: Command[]; expireAt: number } | null = null;
@@ -28,16 +28,11 @@ async function getWhitelistedGroup(groupId: string): Promise<GroupWhitelist | nu
   // 缓存失效或不存在，从数据库查询
   const group = await storage.getGroupByGroupId(groupId);
   
-  // 更新缓存
-  if (group) {
-    whitelistCache.set(groupId, {
-      data: group,
-      expireAt: now + CACHE_TTL
-    });
-  } else {
-    // 即使查询结果为 null，也缓存一段时间避免重复查询
-    whitelistCache.delete(groupId);
-  }
+  // 更新缓存（包括负缓存：即使查询结果为 null 也缓存，避免重复查询）
+  whitelistCache.set(groupId, {
+    data: group ?? null, // null 也会被缓存
+    expireAt: now + CACHE_TTL
+  });
   
   return group;
 }

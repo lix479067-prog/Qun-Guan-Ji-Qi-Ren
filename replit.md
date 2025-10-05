@@ -31,6 +31,10 @@ Preferred communication style: Simple, everyday language.
 -   **API:** RESTful (`/api` prefix), JSON format, comprehensive error handling, request logging.
 -   **Bot Integration:** Telegraf library for Telegram Bot API, manages bot lifecycle and command processing. Uses Webhook mode for real-time, efficient message delivery.
 -   **Bot Communication:** Webhook mode is used for real-time message delivery, low resource consumption, and flexible domain configuration via environment variables (`WEBHOOK_DOMAIN` or `WEBHOOK_URL`).
+-   **Performance Optimization:**
+    -   **In-memory caching:** 30-minute TTL cache for whitelist groups and command lists to reduce database queries
+    -   **Negative caching:** Caches "not found" results to prevent repeated queries for non-whitelisted groups
+    -   **Auto-invalidation:** Cache automatically cleared when configurations are updated (add/remove groups, create/update/delete commands, bot token changes)
 
 ### Data Storage
 
