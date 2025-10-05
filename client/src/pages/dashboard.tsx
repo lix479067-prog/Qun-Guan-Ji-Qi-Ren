@@ -2,10 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import Sidebar from "@/components/Sidebar";
 import StatsCard from "@/components/StatsCard";
 import BotConfig from "@/components/BotConfig";
-import GroupWhitelist from "@/components/GroupWhitelist";
-import CommandConfig from "@/components/CommandConfig";
-import ActivityLog from "@/components/ActivityLog";
-import { Users, Terminal, CheckCircle, TrendingUp } from "lucide-react";
+import { Users, Terminal, CheckCircle } from "lucide-react";
 
 export default function Dashboard() {
   const { data: stats } = useQuery<{
@@ -74,15 +71,6 @@ export default function Dashboard() {
 
           {/* Bot Configuration */}
           <BotConfig />
-
-          {/* Two Column Layout: Groups & Commands */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <GroupWhitelist />
-            <CommandConfig />
-          </div>
-
-          {/* Activity Log */}
-          <ActivityLog />
         </div>
       </main>
     </div>
