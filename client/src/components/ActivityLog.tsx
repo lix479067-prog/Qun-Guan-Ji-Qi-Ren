@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { CheckCircle, AlertTriangle, FileText, Users, RefreshCw, Download, Server } from "lucide-react";
+import { CheckCircle, AlertTriangle, FileText, Users, RefreshCw, Download, Server, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { ActivityLog, GroupWhitelist } from "@shared/schema";
 import { formatDistanceToNow } from "date-fns";
@@ -10,6 +11,7 @@ import { zhCN } from "date-fns/locale";
 export default function ActivityLogs() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [selectedGroupId, setSelectedGroupId] = useState<string>("");
+  const [searchTerm, setSearchTerm] = useState<string>("");
 
   // 获取系统日志（不启用自动刷新）
   const { data: systemLogs = [], refetch: refetchSystemLogs } = useQuery<ActivityLog[]>({
@@ -54,12 +56,32 @@ export default function ActivityLogs() {
     },
   });
 
+  // 过滤群组（根据搜索词）
+  const filteredGroups = groups.filter((group) => {
+    if (!searchTerm.trim()) return true;
+    const search = searchTerm.toLowerCase();
+    return (
+      group.groupTitle?.toLowerCase().includes(search) ||
+      group.groupId.toLowerCase().includes(search)
+    );
+  });
+
   // 设置默认选中的群组
   useEffect(() => {
-    if (groups.length > 0 && !selectedGroupId) {
-      setSelectedGroupId(groups[0].groupId);
+    if (filteredGroups.length > 0 && !selectedGroupId) {
+      setSelectedGroupId(filteredGroups[0].groupId);
     }
-  }, [groups, selectedGroupId]);
+  }, [filteredGroups, selectedGroupId]);
+
+  // 当搜索结果改变时，确保选中的群组在过滤结果中
+  useEffect(() => {
+    if (filteredGroups.length > 0 && selectedGroupId) {
+      const isSelectedInFiltered = filteredGroups.some(g => g.groupId === selectedGroupId);
+      if (!isSelectedInFiltered) {
+        setSelectedGroupId(filteredGroups[0].groupId);
+      }
+    }
+  }, [filteredGroups, selectedGroupId]);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -198,29 +220,50 @@ export default function ActivityLogs() {
             </div>
           ) : (
             <Tabs value={selectedGroupId} onValueChange={setSelectedGroupId} className="flex-1 flex flex-col min-h-0 overflow-hidden">
+              {/* 搜索框 */}
+              <div className="bg-muted/20 px-4 py-3 border-b border-border flex-shrink-0">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    type="text"
+                    placeholder="搜索群组名称或ID..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-9 h-9 bg-background"
+                    data-testid="input-search-groups"
+                  />
+                </div>
+              </div>
+
               {/* 群组标签页 */}
-              <div className="bg-muted/30 px-4 border-b border-border flex-shrink-0">
+              <div className="bg-muted/30 px-4 border-b border-border flex-shrink-0 overflow-x-auto">
                 <TabsList className="bg-transparent h-auto p-0 gap-1">
-                  {groups.map((group) => {
-                    const logCount = groupLogsMap[group.groupId]?.length || 0;
-                    return (
-                      <TabsTrigger
-                        key={group.groupId}
-                        value={group.groupId}
-                        className="data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-t-md rounded-b-none px-4 py-2"
-                        data-testid={`tab-group-${group.groupId}`}
-                      >
-                        <Users className="w-3 h-3 mr-1.5" />
-                        <span className="text-xs">{group.groupTitle || "未命名群组"}</span>
-                        <span className="ml-1.5 text-xs text-muted-foreground">({logCount})</span>
-                      </TabsTrigger>
-                    );
-                  })}
+                  {filteredGroups.length === 0 ? (
+                    <div className="py-3 text-xs text-muted-foreground">
+                      未找到匹配的群组
+                    </div>
+                  ) : (
+                    filteredGroups.map((group) => {
+                      const logCount = groupLogsMap[group.groupId]?.length || 0;
+                      return (
+                        <TabsTrigger
+                          key={group.groupId}
+                          value={group.groupId}
+                          className="data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-t-md rounded-b-none px-4 py-2"
+                          data-testid={`tab-group-${group.groupId}`}
+                        >
+                          <Users className="w-3 h-3 mr-1.5" />
+                          <span className="text-xs">{group.groupTitle || "未命名群组"}</span>
+                          <span className="ml-1.5 text-xs text-muted-foreground">({logCount})</span>
+                        </TabsTrigger>
+                      );
+                    })
+                  )}
                 </TabsList>
               </div>
 
               {/* 群组日志内容 */}
-              {groups.map((group) => {
+              {filteredGroups.map((group) => {
                 const groupLogs = groupLogsMap[group.groupId] || [];
                 
                 return (
