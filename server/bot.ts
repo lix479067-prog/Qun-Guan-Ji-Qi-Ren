@@ -183,8 +183,7 @@ export async function startBot(token: string): Promise<void> {
             await ctx.reply(
               `📋 群组信息\n\n` +
               `群组ID: <code>${chatId}</code>\n` +
-              `群组名称: ${chatTitle || "未知"}\n\n` +
-              `💡 点击下方按钮即可复制群组ID`,
+              `群组名称: ${chatTitle || "未知"}`,
               {
                 parse_mode: 'HTML',
                 reply_markup: {
